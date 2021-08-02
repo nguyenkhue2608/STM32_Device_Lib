@@ -16,6 +16,7 @@ VD: Value = SRF05_Read(&SRF05_01);
 ***Note: #include va cau hinh ham delay truyen vao
 *********************** *****************************************************************************/
 #include "SRF05.h"
+#include "delay_timer.h"
 //************************* Low Level Layer **********************************************************/
 //#include "delay_timer.h"
 #define TRIG_HIGH()		HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_SET)
