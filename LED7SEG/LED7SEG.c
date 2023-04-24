@@ -31,7 +31,20 @@ void LED7SEG_Init(LED7SEG_Device_Name* LED7SEG, LED7TYPE Led7Type,
 	LED7SEG->SEG_G_Pin = SEG_G_Pin;
 	LED7SEG->SEG_H_Pin = SEG_H_Pin;
 }
-
+void LED7SEG_InitScan(LED7SEG_Num* LED7_NUM, GPIO_TypeDef* LED1, uint16_t LED1_pin, 
+											GPIO_TypeDef* LED2, uint16_t LED2_pin,
+											GPIO_TypeDef* LED3, uint16_t LED3_pin, 
+											GPIO_TypeDef* LED4, uint16_t LED4_pin)
+{
+	LED7_NUM->LED1 = LED1;
+	LED7_NUM->LED2 = LED2;
+	LED7_NUM->LED3 = LED3;
+	LED7_NUM->LED4 = LED4;
+	LED7_NUM->LED1_pin = LED1_pin;
+	LED7_NUM->LED2_pin = LED2_pin;
+	LED7_NUM->LED3_pin = LED3_pin;
+	LED7_NUM->LED4_pin = LED4_pin;
+}
 void LED7SEG_WriteOneNumber(LED7SEG_Device_Name* LED7SEG, uint8_t number)
 {
 	if(LED7SEG->Led7Type == ANODE)
@@ -58,13 +71,32 @@ void LED7SEG_WriteOneNumber(LED7SEG_Device_Name* LED7SEG, uint8_t number)
 	}
 }
 
-LED7SEG_NumberInt LED7SEG_ConvertInt(uint32_t number)
+LED7SEG_NumberInt LED7SEG_ConvertInt(uint32_t number) //12345
 {
 	LED7SEG_NumberInt numberInt;
-	numberInt.TenOfThousands = number/10000;
-	numberInt.Thousands = (number%10000)/1000;
-	numberInt.Hundreds = ((number%10000)%1000)/100;
-	numberInt.Dozens = (((number%10000)%1000)%100)/10;
-	numberInt.Uints = (((number%10000)%1000)%100)%10;
+	numberInt.TenOfThousands = number/10000;  //1
+	numberInt.Thousands = (number%10000)/1000; // 2
+	numberInt.Hundreds = ((number%10000)%1000)/100; //3
+	numberInt.Dozens = (((number%10000)%1000)%100)/10; //4
+	numberInt.Uints = (((number%10000)%1000)%100)%10; //5
 	return numberInt;
 }
+void LED7SEG_Scan4Led(LED7SEG_Num* LED7_NUM, LED7SEG_Device_Name* LED7SEG, uint16_t number)
+{
+	LED7SEG_NumberInt number_convert;
+	number_convert = LED7SEG_ConvertInt(number);
+	HAL_GPIO_WritePin(LED7_NUM->LED1, LED7_NUM->LED1_pin, GPIO_PIN_SET);
+	LED7SEG_WriteOneNumber(LED7SEG, number_convert.Thousands);
+	
+	HAL_GPIO_WritePin(LED7_NUM->LED1, LED7_NUM->LED1_pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED7_NUM->LED2, LED7_NUM->LED2_pin, GPIO_PIN_SET);
+	LED7SEG_WriteOneNumber(LED7SEG, number_convert.Hundreds);
+	
+	HAL_GPIO_WritePin(LED7_NUM->LED2, LED7_NUM->LED2_pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED7_NUM->LED3, LED7_NUM->LED3_pin, GPIO_PIN_SET);
+	LED7SEG_WriteOneNumber(LED7SEG, number_convert.Dozens);
+	
+	HAL_GPIO_WritePin(LED7_NUM->LED3, LED7_NUM->LED3_pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED7_NUM->LED4, LED7_NUM->LED4_pin, GPIO_PIN_SET);
+	LED7SEG_WriteOneNumber(LED7SEG, number_convert.Uints);
+}	
