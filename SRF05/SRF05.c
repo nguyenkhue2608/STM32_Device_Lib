@@ -1,75 +1,118 @@
 /*****************************************************************************************************
-@File: 		SRF05 Ultrasonic Module
-@Author: khuenguyen
+@File:    SRF05 / HC-SR04 Ultrasonic Module
+@Author:  khuenguyen
 @website: khuenguyencreator.com
 @youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
 
-@huong dan su dung:
-- Cau hinh chan TRIG output no pull, Echo input no pull
-- Tao mot bien luu gia tri doc duoc kieu SRF05_Typedef 
-VD: SRF05_Typedef SRF05_01;
-- Truyen dia chi 2 chan vao SRF05_Init
-VD: SRF05_Init(&SRF05_01, ECHO_GPIO_Port, ECHO_Pin, TRIG_GPIO_Port, TRIG_Pin);
-- Doc gia tri nhan duoc
-VD: Value = SRF05_Read(&SRF05_01);
-
-***Note: #include va cau hinh ham delay truyen vao
-*********************** *****************************************************************************/
+Cach do: phat xung trigger 10us, sau do dung input capture bat canh len roi canh xuong
+cua chan ECHO. Do rong xung (us) = t_fall - t_rise; khoang cach (cm) = do_rong / 58.
+Gia tri capture duoc phan cung chot lai ngay tai canh tin hieu nen ket qua khong bi
+lech du co interrupt xen vao giua.
+*****************************************************************************************************/
 #include "SRF05.h"
-#include "delay_timer.h"
-//************************* Low Level Layer **********************************************************/
-//#include "delay_timer.h"
-#define TRIG_HIGH()		HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_SET)
-#define TRIG_LOW()		HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_RESET)
-#define READ_ECHO() 	HAL_GPIO_ReadPin(SRF05->ECHO_GPIOx, SRF05->ECHO_GPIO_Pin)
-extern TIM_HandleTypeDef htim4;
 
-static void SRF05_DELAY_Us(uint16_t Time)
+//************************* Low Level Layer *********************************************************/
+
+/* Delay us dua tren bo dem chu ky DWT (Cortex-M3/M4). Chi dung cho xung trigger ~10us. */
+static void SRF05_DWT_Init(void)
 {
-	DELAY_TIM_Us(&htim4, Time); // thay the ham nay neu su dung ham delay khac
-	
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	DWT->CYCCNT = 0;
+	DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-//************************* HIGH Level Layer **********************************************************/
-// function:  init SRF05
-// input: SRF05 target, TRIG pin, Echo Pin
-// output: 0 false, 1 true
-uint8_t SRF05_Init(SRF05_Device_Name* SRF05, GPIO_TypeDef* ECHO_GPIOx, uint16_t ECHO_GPIO_Pin, GPIO_TypeDef* TRIGGER_GPIOx, uint16_t TRIGGER_GPIO_Pin) {	
+static void SRF05_DelayUs(uint32_t us)
+{
+	uint32_t start = DWT->CYCCNT;
+	uint32_t ticks = us * (SystemCoreClock / 1000000U);
+	while ((DWT->CYCCNT - start) < ticks) { }
+}
 
-	SRF05->ECHO_GPIOx = ECHO_GPIOx;
-	SRF05->ECHO_GPIO_Pin = ECHO_GPIO_Pin;
-	SRF05->TRIGGER_GPIOx = TRIGGER_GPIOx;
+static uint32_t SRF05_TimFlag(uint32_t channel)
+{
+	switch (channel)
+	{
+		case TIM_CHANNEL_1: return TIM_FLAG_CC1;
+		case TIM_CHANNEL_2: return TIM_FLAG_CC2;
+		case TIM_CHANNEL_3: return TIM_FLAG_CC3;
+		default:            return TIM_FLAG_CC4;
+	}
+}
+
+/* Cho mot lan capture, tra ve 0 neu qua thoi gian cho */
+static uint8_t SRF05_WaitCapture(SRF05_Device_Name* SRF05, uint32_t* value)
+{
+	uint32_t flag  = SRF05_TimFlag(SRF05->Channel);
+	uint32_t start = HAL_GetTick();
+
+	while (!__HAL_TIM_GET_FLAG(SRF05->Timer, flag))
+	{
+		if ((HAL_GetTick() - start) > SRF05_ECHO_TIMEOUT_MS) return 0;
+	}
+	__HAL_TIM_CLEAR_FLAG(SRF05->Timer, flag);
+	*value = HAL_TIM_ReadCapturedValue(SRF05->Timer, SRF05->Channel);
+	return 1;
+}
+
+//************************* High Level Layer *******************************************************/
+
+uint8_t SRF05_Init(SRF05_Device_Name* SRF05, TIM_HandleTypeDef* Timer, uint32_t Channel,
+                   GPIO_TypeDef* TRIGGER_GPIOx, uint16_t TRIGGER_GPIO_Pin)
+{
+	SRF05->Timer            = Timer;
+	SRF05->Channel          = Channel;
+	SRF05->TRIGGER_GPIOx    = TRIGGER_GPIOx;
 	SRF05->TRIGGER_GPIO_Pin = TRIGGER_GPIO_Pin;
-	TRIG_LOW();
-	if (SRF05_Read(SRF05) >= 0) {
-		return 1;
-	}
-	return 0;
+	SRF05->Distance         = -1.0f;
+
+	SRF05_DWT_Init();
+	HAL_GPIO_WritePin(TRIGGER_GPIOx, TRIGGER_GPIO_Pin, GPIO_PIN_RESET);
+
+	return (SRF05_Read(SRF05) >= 0.0f) ? 1 : 0;
 }
 
-float SRF05_Read(SRF05_Device_Name* SRF05) {
-	uint32_t time, timeout;
+float SRF05_Read(SRF05_Device_Name* SRF05)
+{
+	uint32_t t_rise, t_fall, width;
 
-	TRIG_LOW();
-	SRF05_DELAY_Us(2);
-	TRIG_HIGH();
-	SRF05_DELAY_Us(10);
-	TRIG_LOW();
-	timeout = SRF05_TIMEOUT;
-	while (!READ_ECHO()) 
-	{
-		if (timeout-- == 0x00) 
-		{
-			return -1;
-		}
-	}
-	time = 0;
-	while (READ_ECHO()) 
-	{
-		time++;
-		SRF05_DELAY_Us(1);
-	}
-	SRF05->Distance =  (float)time * SRF05_NUMBER;
+	/* 1. Xung trigger: LOW 2us -> HIGH 10us -> LOW */
+	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_RESET);
+	SRF05_DelayUs(2);
+	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_SET);
+	SRF05_DelayUs(10);
+	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_RESET);
 
+	/* 2. Bat canh len cua ECHO */
+	__HAL_TIM_SET_CAPTUREPOLARITY(SRF05->Timer, SRF05->Channel, TIM_INPUTCHANNELPOLARITY_RISING);
+	if (HAL_TIM_IC_Start(SRF05->Timer, SRF05->Channel) != HAL_OK)
+	{
+		SRF05->Distance = -1.0f;
+		return -1.0f;
+	}
+	__HAL_TIM_CLEAR_FLAG(SRF05->Timer, SRF05_TimFlag(SRF05->Channel));
+
+	if (!SRF05_WaitCapture(SRF05, &t_rise))
+	{
+		HAL_TIM_IC_Stop(SRF05->Timer, SRF05->Channel);
+		SRF05->Distance = -1.0f;
+		return -1.0f;
+	}
+
+	/* 3. Bat canh xuong cua ECHO. Doc CCRx o buoc tren da xoa CCxIF nen khong
+	   clear lai (tranh lo canh xuong neu no den ngay sau khi doi cuc tinh). */
+	__HAL_TIM_SET_CAPTUREPOLARITY(SRF05->Timer, SRF05->Channel, TIM_INPUTCHANNELPOLARITY_FALLING);
+
+	if (!SRF05_WaitCapture(SRF05, &t_fall))
+	{
+		HAL_TIM_IC_Stop(SRF05->Timer, SRF05->Channel);
+		SRF05->Distance = -1.0f;
+		return -1.0f;
+	}
+
+	HAL_TIM_IC_Stop(SRF05->Timer, SRF05->Channel);
+
+	/* 4. Do rong xung echo (us) -> khoang cach (cm). Mask 16 bit xu ly 1 lan tran counter. */
+	width = (t_fall - t_rise) & 0xFFFFU;
+	SRF05->Distance = (float)width / SRF05_US_PER_CM;
 	return SRF05->Distance;
 }

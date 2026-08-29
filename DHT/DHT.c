@@ -1,125 +1,165 @@
 /******************************************************************************************************************
-@File:  	DHT Sensor
+@File:    DHT11 / DHT22 Sensor
 @Author:  Khue Nguyen
 @Website: khuenguyencreator.com
 @Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-Huong dan su dung:
-- Su dung thu vien HAL
-- Khoi tao bien DHT : DHT_Name DHT1;
-- Khoi tao chan DHT:
-	DHT_Init(&DHT1, DHT11, &htim4, DHT_GPIO_Port, DHT_Pin);
-- Su dung cac ham phai truyen dia chi cua DHT do: 
-	DHT_ReadTempHum(&DHT1);
+
+Luong doc:
+ 1. Host keo DATA xuong StartMs milli-giay roi tha ra.
+ 2. Cam bien tra loi: 80us LOW + 80us HIGH, sau do 40 bit, moi bit = 50us LOW + xung HIGH
+    (26-28us = bit 0, ~70us = bit 1).
+ 3. Chuyen chan sang input capture, chi bat CANH XUONG (STM32F1 khong ho tro bat 2 canh).
+    Do rong tu canh xuong nay den canh xuong ke tiep = chu ky mot bit:
+      bit 0 ~ 77us, bit 1 ~ 120us  ->  so voi DHT_BIT_PERIOD_US.
+ 4. Kiem tra checksum.
+
+Trong luc capture, ngat bi tam khoa (~5 ms) de vong poll khong bo lo canh; gia tri thoi
+gian van chinh xac vi duoc phan cung chot tai CCRx.
 ******************************************************************************************************************/
 #include "DHT.h"
-//************************** Low Level Layer ********************************************************//
-#include "delay_timer.h"
 
-static void DHT_DelayInit(DHT_Name* DHT)
+/* So vong poll toi da cho mot canh (~vai us tren F1@72MHz cho moi vong) -> vai ms */
+#define DHT_CAPTURE_GUARD  40000U
+/* So canh xuong can bat: 1 (bat dau 80us LOW) + 1 (het response) + 40 (dau moi bit LOW)
+   -> chu ky bit k = cap[k+2] - cap[k+1], k = 0..39 */
+#define DHT_EDGE_COUNT     42U
+
+//************************** Low Level Layer ********************************************************//
+
+static void DHT_DWT_Init(void)
 {
-	DELAY_TIM_Init(DHT->Timer);
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	DWT->CYCCNT = 0;
+	DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
 }
-static void DHT_DelayUs(DHT_Name* DHT, uint16_t Time)
+
+static void DHT_DelayUs(uint32_t us)
 {
-	DELAY_TIM_Us(DHT->Timer, Time);
+	uint32_t start = DWT->CYCCNT;
+	uint32_t ticks = us * (SystemCoreClock / 1000000U);
+	while ((DWT->CYCCNT - start) < ticks) { }
+}
+
+static uint32_t DHT_TimFlag(uint32_t channel)
+{
+	switch (channel)
+	{
+		case TIM_CHANNEL_1: return TIM_FLAG_CC1;
+		case TIM_CHANNEL_2: return TIM_FLAG_CC2;
+		case TIM_CHANNEL_3: return TIM_FLAG_CC3;
+		default:            return TIM_FLAG_CC4;
+	}
 }
 
 static void DHT_SetPinOut(DHT_Name* DHT)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
-	GPIO_InitStruct.Pin = DHT->Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
+	GPIO_InitStruct.Pin   = DHT->Pin;
+	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
 }
+
 static void DHT_SetPinIn(DHT_Name* DHT)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
-	GPIO_InitStruct.Pin = DHT->Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
+	GPIO_InitStruct.Pin  = DHT->Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
 }
-static void DHT_WritePin(DHT_Name* DHT, uint8_t Value)
-{
-	HAL_GPIO_WritePin(DHT->PORT, DHT->Pin, Value);
-}
-static uint8_t DHT_ReadPin(DHT_Name* DHT)
-{
-	uint8_t Value;
-	Value =  HAL_GPIO_ReadPin(DHT->PORT, DHT->Pin);
-	return Value;
-}
-//********************************* Middle level Layer ****************************************************//
-static uint8_t DHT_Start(DHT_Name* DHT)
-{
-	uint8_t Response = 0;
-	DHT_SetPinOut(DHT);  
-	DHT_WritePin(DHT, 0);
-	DHT_DelayUs(DHT, DHT->Type);   
-	DHT_SetPinIn(DHT);    
-	DHT_DelayUs(DHT, 40); 
-	if (!DHT_ReadPin(DHT))
-	{
-		DHT_DelayUs(DHT, 40); 
-		if(DHT_ReadPin(DHT))
-		{
-			Response = 1;   
-		}
-		else Response = 0;  
-	}		
-	while(DHT_ReadPin(DHT));
 
-	return Response;
-}
-static uint8_t DHT_Read(DHT_Name* DHT)
+/* Cho 1 canh capture. Tra ve 0 neu qua so vong guard. */
+static uint8_t DHT_WaitCapture(DHT_Name* DHT, uint32_t flag, uint32_t* value)
 {
-	uint8_t Value = 0;
-	DHT_SetPinIn(DHT);
-	for(int i = 0; i<8; i++)
+	uint32_t guard = 0;
+
+	while (!__HAL_TIM_GET_FLAG(DHT->Timer, flag))
 	{
-		while(!DHT_ReadPin(DHT));
-		DHT_DelayUs(DHT, 40);
-		if(!DHT_ReadPin(DHT))
-		{
-			Value &= ~(1<<(7-i));	
-		}
-		else Value |= 1<<(7-i);
-		while(DHT_ReadPin(DHT));
+		if (++guard > DHT_CAPTURE_GUARD) return 0;
 	}
-	return Value;
+	__HAL_TIM_CLEAR_FLAG(DHT->Timer, flag);
+	*value = HAL_TIM_ReadCapturedValue(DHT->Timer, DHT->Channel);
+	return 1;
 }
 
 //************************** High Level Layer ********************************************************//
-void DHT_Init(DHT_Name* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, GPIO_TypeDef* DH_PORT, uint16_t DH_Pin)
+
+void DHT_Init(DHT_Name* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_t Channel,
+              GPIO_TypeDef* DH_PORT, uint16_t DH_Pin)
 {
-	if(DHT_Type == DHT11)
-	{
-		DHT->Type = DHT11_STARTTIME;
-	}
-	else if(DHT_Type == DHT22)
-	{
-		DHT->Type = DHT22_STARTTIME;
-	}
-	DHT->PORT = DH_PORT;
-	DHT->Pin = DH_Pin;
-	DHT->Timer = Timer;
-	DHT_DelayInit(DHT);
+	DHT->Type    = DHT_Type;
+	DHT->StartMs = (DHT_Type == DHT22) ? DHT22_START_MS : DHT11_START_MS;
+	DHT->Timer   = Timer;
+	DHT->Channel = Channel;
+	DHT->PORT    = DH_PORT;
+	DHT->Pin     = DH_Pin;
+
+	DHT_DWT_Init();
+	DHT_SetPinIn(DHT);
 }
 
 uint8_t DHT_ReadTempHum(DHT_Name* DHT)
 {
-	uint8_t Temp1, Temp2, RH1, RH2;
-	uint16_t Temp, Humi, SUM = 0;
-	DHT_Start(DHT);
-	RH1 = DHT_Read(DHT);
-	RH2 = DHT_Read(DHT);
-	Temp1 = DHT_Read(DHT);
-	Temp2 = DHT_Read(DHT);
-	SUM = DHT_Read(DHT);
-	Temp = (Temp1<<8)|Temp2;
-	Humi = (RH1<<8)|RH2;
-	DHT->Temp = (float)(Temp/10.0);
-	DHT->Humi = (float)(Humi/10.0);
-	return SUM;
+	uint32_t cap[DHT_EDGE_COUNT];
+	uint8_t  data[5] = {0};
+	uint32_t flag = DHT_TimFlag(DHT->Channel);
+	uint32_t i;
+	uint8_t  ok = 1;
+
+	/* 1. Xung start: keo DATA xuong StartMs ms (con IRQ de HAL_Delay chay) */
+	DHT_SetPinOut(DHT);
+	HAL_GPIO_WritePin(DHT->PORT, DHT->Pin, GPIO_PIN_RESET);
+	HAL_Delay(DHT->StartMs);
+
+	/* 2. Khoa IRQ, tha chan va vu trang input capture (chi canh xuong) NGAY,
+	   truoc khi cam bien keo xuong (~20-40us sau khi tha). */
+	__disable_irq();
+	HAL_GPIO_WritePin(DHT->PORT, DHT->Pin, GPIO_PIN_SET);
+	DHT_SetPinIn(DHT);
+	DHT_DelayUs(2);
+
+	__HAL_TIM_SET_CAPTUREPOLARITY(DHT->Timer, DHT->Channel, TIM_INPUTCHANNELPOLARITY_FALLING);
+	if (HAL_TIM_IC_Start(DHT->Timer, DHT->Channel) != HAL_OK) { __enable_irq(); return 0; }
+	__HAL_TIM_SET_COUNTER(DHT->Timer, 0);
+	__HAL_TIM_CLEAR_FLAG(DHT->Timer, flag);
+
+	for (i = 0; i < DHT_EDGE_COUNT; i++)
+	{
+		if (!DHT_WaitCapture(DHT, flag, &cap[i])) { ok = 0; break; }
+	}
+
+	__enable_irq();
+	HAL_TIM_IC_Stop(DHT->Timer, DHT->Channel);
+
+	if (!ok) return 0;
+
+	/* 3. Kiem tra header: cap[1] - cap[0] ~ 160us (80us LOW + 80us HIGH) */
+	if (((cap[1] - cap[0]) & 0xFFFFU) < 120U) return 0;
+
+	/* 4. Giai ma: chu ky bit k = cap[k+2] - cap[k+1] */
+	for (i = 0; i < 40; i++)
+	{
+		uint32_t period = (cap[i + 2] - cap[i + 1]) & 0xFFFFU;
+		if (period > DHT_BIT_PERIOD_US)
+			data[i / 8] |= (uint8_t)(1U << (7 - (i % 8)));
+	}
+
+	/* 5. Kiem tra checksum */
+	if (((uint16_t)(data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4])
+		return 0;
+
+	/* 6. Chuyen doi theo tung dong cam bien */
+	if (DHT->Type == DHT11)
+	{
+		DHT->Humi = (float)data[0] + (float)data[1] * 0.1f;
+		DHT->Temp = (float)data[2] + (float)(data[3] & 0x0F) * 0.1f;
+	}
+	else /* DHT22 */
+	{
+		int16_t traw = (int16_t)(((data[2] & 0x7F) << 8) | data[3]);
+		DHT->Humi = (float)(((uint16_t)data[0] << 8) | data[1]) / 10.0f;
+		DHT->Temp = (data[2] & 0x80) ? (-(float)traw / 10.0f) : ((float)traw / 10.0f);
+	}
+	return 1;
 }
