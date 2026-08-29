@@ -12,16 +12,12 @@ Huong dan su dung:
     DHT_Init(&dht1, DHT11, &htim2, TIM_CHANNEL_1, DHT_GPIO_Port, DHT_Pin);
 - Doc du lieu (tra ve 1 neu OK va checksum dung, 0 neu loi/timeout):
     if (DHT_ReadTempHum(&dht1)) { ... dht1.Temp, dht1.Humi ... }
-
-Ghi chu: driver khong con phu thuoc thu vien "Delay timer". Do rong tung xung bit do
-bang phan cung (input capture) thay vi delay + doc chan.
 ******************************************************************************************************************/
 #ifndef __DHT_H
 #define __DHT_H
 
 #include "stm32f1xx_hal.h"
 
-/* Loai cam bien */
 #define DHT11 0x01
 #define DHT22 0x02
 
@@ -29,8 +25,7 @@ bang phan cung (input capture) thay vi delay + doc chan.
 #define DHT11_START_MS 18
 #define DHT22_START_MS 2
 
-/* Do bang chu ky tung bit (falling -> falling): bit 0 ~ 50+27 = 77us,
-   bit 1 ~ 50+70 = 120us. Nguong dat o giua. */
+/* Nguong chu ky bit (falling->falling): bit 0 ~ 77us, bit 1 ~ 120us */
 #define DHT_BIT_PERIOD_US 100
 
 typedef struct

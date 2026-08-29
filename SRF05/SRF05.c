@@ -4,16 +4,14 @@
 @website: khuenguyencreator.com
 @youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
 
-Cach do: phat xung trigger 10us, sau do dung input capture bat canh len roi canh xuong
-cua chan ECHO. Do rong xung (us) = t_fall - t_rise; khoang cach (cm) = do_rong / 58.
-Gia tri capture duoc phan cung chot lai ngay tai canh tin hieu nen ket qua khong bi
-lech du co interrupt xen vao giua.
+Phat xung trigger 10us roi dung input capture bat canh len va canh xuong cua ECHO.
+Do rong xung echo (us) = t_fall - t_rise; khoang cach (cm) = do_rong / 58.
 *****************************************************************************************************/
 #include "SRF05.h"
 
 //************************* Low Level Layer *********************************************************/
 
-/* Delay us dua tren bo dem chu ky DWT (Cortex-M3/M4). Chi dung cho xung trigger ~10us. */
+/* Delay us bang DWT cycle counter (Cortex-M3/M4), chi dung cho xung trigger */
 static void SRF05_DWT_Init(void)
 {
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -39,7 +37,6 @@ static uint32_t SRF05_TimFlag(uint32_t channel)
 	}
 }
 
-/* Cho mot lan capture, tra ve 0 neu qua thoi gian cho */
 static uint8_t SRF05_WaitCapture(SRF05_Device_Name* SRF05, uint32_t* value)
 {
 	uint32_t flag  = SRF05_TimFlag(SRF05->Channel);
@@ -75,14 +72,14 @@ float SRF05_Read(SRF05_Device_Name* SRF05)
 {
 	uint32_t t_rise, t_fall, width;
 
-	/* 1. Xung trigger: LOW 2us -> HIGH 10us -> LOW */
+	/* Xung trigger: LOW 2us -> HIGH 10us -> LOW */
 	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_RESET);
 	SRF05_DelayUs(2);
 	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_SET);
 	SRF05_DelayUs(10);
 	HAL_GPIO_WritePin(SRF05->TRIGGER_GPIOx, SRF05->TRIGGER_GPIO_Pin, GPIO_PIN_RESET);
 
-	/* 2. Bat canh len cua ECHO */
+	/* Canh len cua ECHO */
 	__HAL_TIM_SET_CAPTUREPOLARITY(SRF05->Timer, SRF05->Channel, TIM_INPUTCHANNELPOLARITY_RISING);
 	if (HAL_TIM_IC_Start(SRF05->Timer, SRF05->Channel) != HAL_OK)
 	{
@@ -98,8 +95,7 @@ float SRF05_Read(SRF05_Device_Name* SRF05)
 		return -1.0f;
 	}
 
-	/* 3. Bat canh xuong cua ECHO. Doc CCRx o buoc tren da xoa CCxIF nen khong
-	   clear lai (tranh lo canh xuong neu no den ngay sau khi doi cuc tinh). */
+	/* Canh xuong cua ECHO (khong clear flag: doc CCRx o tren da xoa CCxIF) */
 	__HAL_TIM_SET_CAPTUREPOLARITY(SRF05->Timer, SRF05->Channel, TIM_INPUTCHANNELPOLARITY_FALLING);
 
 	if (!SRF05_WaitCapture(SRF05, &t_fall))
@@ -111,8 +107,7 @@ float SRF05_Read(SRF05_Device_Name* SRF05)
 
 	HAL_TIM_IC_Stop(SRF05->Timer, SRF05->Channel);
 
-	/* 4. Do rong xung echo (us) -> khoang cach (cm). Mask 16 bit xu ly 1 lan tran counter. */
-	width = (t_fall - t_rise) & 0xFFFFU;
+	width = (t_fall - t_rise) & 0xFFFFU;   /* mask 16 bit: xu ly 1 lan tran counter */
 	SRF05->Distance = (float)width / SRF05_US_PER_CM;
 	return SRF05->Distance;
 }

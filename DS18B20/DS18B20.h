@@ -12,8 +12,7 @@ Huong dan su dung:
 - Doc nhiet do (do C):
     float t = DS18B20_ReadTemp(&ds1);
 
-Ghi chu: 1-Wire do master chu dong phat timing nen driver dung DWT cycle counter de tao
-delay micro-giay, khong con phu thuoc thu vien "Delay timer" va khong can truyen timer.
+Delay micro-giay lay tu DWT cycle counter (Cortex-M3/M4), khong can timer.
 ******************************************************************************************************************/
 #ifndef __DS18B20_H
 #define __DS18B20_H

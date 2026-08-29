@@ -4,25 +4,14 @@
 @Website: khuenguyencreator.com
 @Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
 
-Luong doc:
- 1. Host keo DATA xuong StartMs milli-giay roi tha ra.
- 2. Cam bien tra loi: 80us LOW + 80us HIGH, sau do 40 bit, moi bit = 50us LOW + xung HIGH
-    (26-28us = bit 0, ~70us = bit 1).
- 3. Chuyen chan sang input capture, chi bat CANH XUONG (STM32F1 khong ho tro bat 2 canh).
-    Do rong tu canh xuong nay den canh xuong ke tiep = chu ky mot bit:
-      bit 0 ~ 77us, bit 1 ~ 120us  ->  so voi DHT_BIT_PERIOD_US.
- 4. Kiem tra checksum.
-
-Trong luc capture, ngat bi tam khoa (~5 ms) de vong poll khong bo lo canh; gia tri thoi
-gian van chinh xac vi duoc phan cung chot tai CCRx.
+Doc bang input capture, chi bat canh xuong (STM32F1 khong ho tro bat 2 canh). Chu ky
+falling->falling la chu ky mot bit: ~77us = bit 0, ~120us = bit 1 (nguong DHT_BIT_PERIOD_US).
+Ngat bi khoa ~5 ms trong luc capture de vong poll khong bo lo canh.
 ******************************************************************************************************************/
 #include "DHT.h"
 
-/* So vong poll toi da cho mot canh (~vai us tren F1@72MHz cho moi vong) -> vai ms */
-#define DHT_CAPTURE_GUARD  40000U
-/* So canh xuong can bat: 1 (bat dau 80us LOW) + 1 (het response) + 40 (dau moi bit LOW)
-   -> chu ky bit k = cap[k+2] - cap[k+1], k = 0..39 */
-#define DHT_EDGE_COUNT     42U
+#define DHT_CAPTURE_GUARD  40000U   /* so vong poll toi da cho 1 canh */
+#define DHT_EDGE_COUNT     42U      /* 2 canh response + 40 canh bit; chu ky bit k = cap[k+2]-cap[k+1] */
 
 //************************** Low Level Layer ********************************************************//
 
@@ -69,7 +58,6 @@ static void DHT_SetPinIn(DHT_Name* DHT)
 	HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
 }
 
-/* Cho 1 canh capture. Tra ve 0 neu qua so vong guard. */
 static uint8_t DHT_WaitCapture(DHT_Name* DHT, uint32_t flag, uint32_t* value)
 {
 	uint32_t guard = 0;
@@ -107,13 +95,12 @@ uint8_t DHT_ReadTempHum(DHT_Name* DHT)
 	uint32_t i;
 	uint8_t  ok = 1;
 
-	/* 1. Xung start: keo DATA xuong StartMs ms (con IRQ de HAL_Delay chay) */
+	/* Xung start: keo DATA xuong StartMs ms (con IRQ de HAL_Delay chay) */
 	DHT_SetPinOut(DHT);
 	HAL_GPIO_WritePin(DHT->PORT, DHT->Pin, GPIO_PIN_RESET);
 	HAL_Delay(DHT->StartMs);
 
-	/* 2. Khoa IRQ, tha chan va vu trang input capture (chi canh xuong) NGAY,
-	   truoc khi cam bien keo xuong (~20-40us sau khi tha). */
+	/* Vu trang capture NGAY sau khi tha chan, truoc khi cam bien keo xuong (~20-40us) */
 	__disable_irq();
 	HAL_GPIO_WritePin(DHT->PORT, DHT->Pin, GPIO_PIN_SET);
 	DHT_SetPinIn(DHT);
@@ -134,10 +121,9 @@ uint8_t DHT_ReadTempHum(DHT_Name* DHT)
 
 	if (!ok) return 0;
 
-	/* 3. Kiem tra header: cap[1] - cap[0] ~ 160us (80us LOW + 80us HIGH) */
+	/* Header phai la ~160us (80us LOW + 80us HIGH) */
 	if (((cap[1] - cap[0]) & 0xFFFFU) < 120U) return 0;
 
-	/* 4. Giai ma: chu ky bit k = cap[k+2] - cap[k+1] */
 	for (i = 0; i < 40; i++)
 	{
 		uint32_t period = (cap[i + 2] - cap[i + 1]) & 0xFFFFU;
@@ -145,11 +131,9 @@ uint8_t DHT_ReadTempHum(DHT_Name* DHT)
 			data[i / 8] |= (uint8_t)(1U << (7 - (i % 8)));
 	}
 
-	/* 5. Kiem tra checksum */
 	if (((uint16_t)(data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4])
 		return 0;
 
-	/* 6. Chuyen doi theo tung dong cam bien */
 	if (DHT->Type == DHT11)
 	{
 		DHT->Humi = (float)data[0] + (float)data[1] * 0.1f;

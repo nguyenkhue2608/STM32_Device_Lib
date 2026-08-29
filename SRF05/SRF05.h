@@ -13,27 +13,21 @@
     SRF05_Init(&us1, &htim3, TIM_CHANNEL_1, TRIG_GPIO_Port, TRIG_Pin);
 - Doc khoang cach (cm), tra ve -1.0f neu qua thoi gian cho (khong co vat can):
     float cm = SRF05_Read(&us1);
-
-Ghi chu: driver khong con phu thuoc thu vien "Delay timer". Xung trigger 10us dung
-DWT cycle counter; do rong xung echo do bang phan cung (input capture) nen khong bi
-sai lech boi interrupt.
 *****************************************************************************************************/
 #ifndef __SRF05_H
 #define __SRF05_H
 
 #include "stm32f1xx_hal.h"
 
-/* Toc do am thanh ~343 m/s: thoi gian di + ve khoang 58 us cho moi cm */
-#define SRF05_US_PER_CM   58.0f
-/* Thoi gian cho toi da mot canh echo (ms). ~38 ms tuong ung tam ~6.5 m */
-#define SRF05_ECHO_TIMEOUT_MS  40u
+#define SRF05_US_PER_CM        58.0f   /* ~58 us di + ve cho moi cm (am thanh ~343 m/s) */
+#define SRF05_ECHO_TIMEOUT_MS  40u     /* cho toi da 1 canh echo (~6.5 m) */
 
 typedef struct {
-	TIM_HandleTypeDef* Timer;      /*!< Timer o che do input capture, 1 us / tick */
+	TIM_HandleTypeDef* Timer;      /*!< timer input capture, 1 us / tick */
 	uint32_t           Channel;    /*!< TIM_CHANNEL_x noi voi chan ECHO */
 	GPIO_TypeDef*      TRIGGER_GPIOx;
 	uint16_t           TRIGGER_GPIO_Pin;
-	float              Distance;   /*!< Khoang cach do duoc gan nhat, don vi cm */
+	float              Distance;   /*!< khoang cach do duoc gan nhat (cm) */
 } SRF05_Device_Name;
 
 uint8_t SRF05_Init(SRF05_Device_Name* SRF05, TIM_HandleTypeDef* Timer, uint32_t Channel,

@@ -73,18 +73,16 @@ static uint8_t DS18B20_Start(DS18B20_Name* DS18B20)
 
 static void DS18B20_WriteBit(DS18B20_Name* DS18B20, uint8_t bit)
 {
-	if (bit)
+	if (bit)   /* Write 1: keo xuong ~2us roi tha, du khe 60us */
 	{
-		/* Write 1: keo xuong ~2us, tha, du khe 60us */
 		DS18B20_SetPinOut(DS18B20);
 		DS18B20_WritePin(DS18B20, 0);
 		DS18B20_DelayUs(2);
 		DS18B20_SetPinIn(DS18B20);
 		DS18B20_DelayUs(60);
 	}
-	else
+	else       /* Write 0: giu xuong ca khe 60us */
 	{
-		/* Write 0: giu xuong ca khe >= 60us, roi 2us hoi phuc */
 		DS18B20_SetPinOut(DS18B20);
 		DS18B20_WritePin(DS18B20, 0);
 		DS18B20_DelayUs(60);
@@ -103,7 +101,7 @@ static uint8_t DS18B20_ReadBit(DS18B20_Name* DS18B20)
 	DS18B20_SetPinIn(DS18B20);
 	DS18B20_DelayUs(10);              /* doc mau trong 15us dau khe */
 	bit = DS18B20_ReadPin(DS18B20) ? 1 : 0;
-	DS18B20_DelayUs(50);             /* du khe doc 60us */
+	DS18B20_DelayUs(50);
 	return bit;
 }
 
@@ -141,8 +139,7 @@ float DS18B20_ReadTemp(DS18B20_Name* DS18B20)
 	DS18B20_Write(DS18B20, DS18B20_SKIPROM);
 	DS18B20_Write(DS18B20, DS18B20_CONVERT);
 
-	/* Trong luc chuyen doi, DS18B20 giu DATA = 0; nha len 1 khi xong.
-	   12 bit ~ 750 ms; poll de khong cho lau hon can thiet, chan tren 800 ms. */
+	/* Cho chuyen doi: DS18B20 giu DATA = 0 khi ban, nha len 1 khi xong (12 bit ~ 750 ms) */
 	{
 		uint32_t t0 = HAL_GetTick();
 		while (!DS18B20_ReadBit(DS18B20))
