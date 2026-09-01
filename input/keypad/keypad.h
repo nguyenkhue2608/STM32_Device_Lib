@@ -6,7 +6,7 @@
 @Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
 Huong dan su dung:
 - Su dung thu vien HAL
-- Khoi tao cac chan Col Ouput, Cac chan Row l‡ Input_Pull_UP
+- Khoi tao cac chan Col Ouput, Cac chan Row l√† Input_Pull_UP
 - Khoi tao bien luu Keypad va keymap
 KEYPAD_Name KeyPad;
 char KEYMAP[NUMROWS][NUMCOLS] = {

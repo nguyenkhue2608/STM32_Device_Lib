@@ -24,8 +24,8 @@ static void SSD1306_I2C_WriteMulti(SSD1306_Name* SSD1306, uint8_t address, uint8
 	for(int i = 0; i < count; i++)
 	{
 		TxBuff[i+1] = data[i];
-		HAL_I2C_Master_Transmit(SSD1306->I2C, address, TxBuff, count+1, 10);
 	}
+	HAL_I2C_Master_Transmit(SSD1306->I2C, address, TxBuff, count+1, 10);
 }
 
 static void SSD1306_I2C_Write(SSD1306_Name* SSD1306, uint8_t address, uint8_t reg, uint8_t data)

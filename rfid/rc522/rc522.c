@@ -20,12 +20,9 @@ static void MFRC522_WriteRegister(MFRC522_Name* MFRC522, uint8_t addr, uint8_t v
 	//CS low
 	uint8_t Address = (addr << 1) & 0x7E;
 	MFRC522_CS(MFRC522, 0);
-	//Send address
+	//Send address, then data (bytes go back-to-back within one CS-low window)
 	TM_SPI_Send(MFRC522, Address);
-	//Send data	
-	HAL_Delay(1);
 	TM_SPI_Send(MFRC522, val);
-	HAL_Delay(1);
 	//CS high
 	MFRC522_CS(MFRC522, 1);
 }
