@@ -1,8 +1,8 @@
 # STM32_Device_Lib
 
 Reusable peripheral / IC drivers for STM32, written on top of the STM32 HAL.
-Drivers are grouped one level deep by category (`<category>/<DEVICE>/`), each
-device folder exposing `<DEVICE>.h` + `<DEVICE>.c`. No `main.c`, no `.ioc`, no
+Drivers are grouped one level deep by category (`<category>/<device>/`), each
+device folder exposing `<device>.h` + `<device>.c`. No `main.c`, no `.ioc`, no
 IDE project files.
 
 Runnable example projects live in the separate **STM32_Device_Exam** repo, which
@@ -16,11 +16,11 @@ pulls this repo in as a git submodule at `lib/drivers/`.
   (function-pointer IO context for I2C/SPI drivers, thin timing backend for the
   bit-bang ones) is the planned next step — see `REFACTOR_CHECKLIST.md`.
 - Language: C99. No `malloc` / `free`.
-- Naming: `<category>/` lowercase, `<DEVICE>/` folder == primary file basename ==
-  API prefix stem (`sensor/DHT/DHT.c` → `DHT_*`). Exceptions: `RC522/` keeps the
-  board name but its API is `MFRC522_*` (chip name); `util/delay_timer/` keeps
-  `DELAY_TIM_*`.
-- Header guards: `#ifndef __<NAME>_H`.
+- Naming: **all folder and file names lowercase**. Device folder == primary file
+  basename; the API prefix is that name upper-cased (`sensor/dht/dht.c` →
+  `DHT_*`, `display/char_lcd/char_lcd.c` → `CHAR_LCD_*`). Exception: `rfid/rc522/`
+  exposes `MFRC522_*` (chip name, not folder name).
+- Header guards: `#ifndef __<NAME>_H` (upper-cased file stem).
 
 ## Categories
 
@@ -36,24 +36,28 @@ rfid/      comms/     audio/     power/     util/      port/
 
 ## Drivers
 
-| Path | Bus / resource | Init signature (abridged) |
-|---|---|---|
-| `sensor/DHT/` | GPIO + TIM (input capture, 1 µs/tick) | `DHT_Init(&d, DHT11, &htim, TIM_CHANNEL_x, PORT, Pin)` |
-| `sensor/DS18B20/` | GPIO (µs delay via DWT) | `DS18B20_Init(&d, PORT, Pin)` |
-| `sensor/SRF05/` | GPIO + TIM (input capture, 1 µs/tick) | `SRF05_Init(&us, &htim, TIM_CHANNEL_x, TRIG_PORT, TRIG_Pin)` |
-| `input/BUTTON/` | GPIO | `BUTTON_Init(&b, PORT, Pin)` |
-| `input/JOYSTICK/` | ADC | `JOYSTICK_Init(&j, &hadc, chX, chY, ...)` |
-| `input/KEYPAD/` | GPIO | `KEYPAD_Init(&kp, KEYMAP, row/col ports+pins)` |
-| `display/SSD1306/` | I2C | `SSD1306_Init(&oled, &hi2c)` |
-| `display/ST7735/` | SPI | `ST7735_Init()` (SPI handle set in `ST7735.h`) |
-| `display/LED7SEG/` | GPIO | `LED7SEG_Init(&seg, type, ...)` |
-| `display/CLCD/` | GPIO (4/8-bit HD44780) | `CLCD_4BIT_Init(&lcd, cols, rows, RS, EN, D4..D7)` |
-| `display/CLCD_I2C/` | I2C (HD44780 backpack) | `CLCD_I2C_Init(&lcd, &hi2c, addr, cols, rows)` |
-| `rtc/DS3231/` | I2C | `DS3231_Init(&rtc, &hi2c)` |
-| `rfid/RC522/` | SPI | `MFRC522_Init(&rc, &hspi, CS_PORT, CS_Pin)` |
-| `audio/DFPLAYER/` | UART | `DFPLAYER_Init(&mp3, &huart)` |
-| `util/FLASH/` | internal flash | `FLASH_WritePage(...)`, `FLASH_ReadData(addr)` |
-| `util/delay_timer/` | TIM | `DELAY_TIM_Init(&htim)` — standalone helper, no driver depends on it |
+| Path | API prefix | Bus / resource | Init signature (abridged) |
+|---|---|---|---|
+| `sensor/dht/` | `DHT_` | GPIO + TIM input capture, 1 µs/tick | `DHT_Init(&d, DHT11, &htim, TIM_CHANNEL_x, PORT, Pin)` |
+| `sensor/ds18b20/` | `DS18B20_` | GPIO (µs delay via DWT) | `DS18B20_Init(&d, PORT, Pin)` |
+| `sensor/srf05/` | `SRF05_` | GPIO + TIM input capture, 1 µs/tick | `SRF05_Init(&us, &htim, TIM_CHANNEL_x, TRIG_PORT, TRIG_Pin)` |
+| `input/button/` | `BUTTON_` | GPIO | `BUTTON_Init(&b, PORT, Pin)` |
+| `input/joystick/` | `JOYSTICK_` | ADC | `JOYSTICK_Init(&j, &hadc, chX, chY, ...)` |
+| `input/keypad/` | `KEYPAD_` | GPIO | `KEYPAD_Init(&kp, KEYMAP, row/col ports+pins)` |
+| `display/ssd1306/` | `SSD1306_` | I2C | `SSD1306_Init(&oled, &hi2c)` |
+| `display/st7735/` | `ST7735_` | SPI | `ST7735_Init()` (SPI handle set in `st7735.h`) |
+| `display/led7seg/` | `LED7SEG_` | GPIO | `LED7SEG_Init(&seg, type, ...)` |
+| `display/char_lcd/` | `CHAR_LCD_` | GPIO (4/8-bit HD44780) | `CHAR_LCD_4BIT_Init(&lcd, cols, rows, RS, EN, D4..D7)` |
+| `display/char_lcd_i2c/` | `CHAR_LCD_I2C_` | I2C (HD44780 + PCF8574) | `CHAR_LCD_I2C_Init(&lcd, &hi2c, addr, cols, rows)` |
+| `rtc/ds3231/` | `DS3231_` | I2C | `DS3231_Init(&rtc, &hi2c)` |
+| `rfid/rc522/` | `MFRC522_` | SPI | `MFRC522_Init(&rc, &hspi, CS_PORT, CS_Pin)` |
+| `audio/dfplayer/` | `DFPLAYER_` | UART | `DFPLAYER_Init(&mp3, &huart)` |
+| `util/flash/` | `FLASH_` | internal flash | `FLASH_WritePage(...)`, `FLASH_ReadData(addr)` |
+| `util/delay_timer/` | `DELAY_TIM_` | TIM | `DELAY_TIM_Init(&htim)` — standalone helper, no driver depends on it |
+
+`char_lcd/` is the HD44780 character-LCD driver (a.k.a. LCD1602 / LCD2004 /
+LiquidCrystal) for 16×2, 20×4, 16×4, 8×2 modules; `char_lcd_i2c/` is the same
+via a PCF8574 backpack.
 
 ### Drivers that need an input-capture timer (`DHT`, `SRF05`)
 
@@ -82,12 +86,12 @@ git submodule update --init --recursive
 Then include the driver and add its folder to the compiler include path:
 
 ```c
-#include "../../lib/drivers/sensor/DHT/DHT.h"    /* Src/ layout      */
-#include "../../../lib/drivers/sensor/DHT/DHT.h"  /* Core/Src/ layout */
+#include "../../lib/drivers/sensor/dht/dht.h"    /* Src/ layout      */
+#include "../../../lib/drivers/sensor/dht/dht.h"  /* Core/Src/ layout */
 ```
 
 Never copy a driver `.c` / `.h` into the project — always compile it from
-`lib/drivers/<category>/<DEVICE>/`.
+`lib/drivers/<category>/<device>/`.
 
 To pull driver updates:
 

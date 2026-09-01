@@ -1,3 +1,3 @@
 # rtc/
 
-Real-time clock chips. Contains: DS3231.
+Real-time clock chips. Contains: ds3231.
