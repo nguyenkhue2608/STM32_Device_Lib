@@ -4,17 +4,17 @@
 	Chuc Nang: Dieu khien man hinh SSD1306, SHT1103...
 	Tac Gia: Khue Nguyen Creator
 	Huong Dan Su dung: 
-	- Khai báo I2C
-	- Khai báo truoc main: SSD1306_Name SSD1306;
+	- Khai bï¿½o I2C
+	- Khai bï¿½o truoc main: SSD1306_Name SSD1306;
 	- Khoi tao I2C cho LCD: SSD1306_Init(&SSD1306, &hi2c1);
-	- Su dung cac ham phai truyen vào &SSD1306
+	- Su dung cac ham phai truyen vï¿½o &SSD1306
 			SSD1306_Clear(&SSD1306);
 			SSD1306_GotoXY(&SSD1306, 1,1);
 			SSD1306_Puts(&SSD1306, "KHUE NGUYEN", &Font_11x18, SSD1306_COLOR_WHITE);
    ----------------------------------------------------------------------
  */
-#ifndef __OLED_LCD_SSD1306_H
-#define __OLED_LCD_SSD1306_H 
+#ifndef __SSD1306_H
+#define __SSD1306_H
 
 #include "stm32f1xx_hal.h"
 

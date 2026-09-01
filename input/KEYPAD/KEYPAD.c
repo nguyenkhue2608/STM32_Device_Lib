@@ -15,11 +15,11 @@ char KEYMAP[NUMROWS][NUMCOLS] = {
 {'*','0','#'}
 };
 - Khoi tao Keypad do:
-	KEYPAD3X4_Init(&KeyPad, KEYMAP, GPIOA, GPIO_PIN_4, GPIOA, GPIO_PIN_5, GPIOA, GPIO_PIN_6, 
+	KEYPAD_Init(&KeyPad, KEYMAP, GPIOA, GPIO_PIN_4, GPIOA, GPIO_PIN_5, GPIOA, GPIO_PIN_6, 
 																	GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1,
 																	GPIOA, GPIO_PIN_2, GPIOA, GPIO_PIN_3);
 - Su dung cac ham phai truyen dia chi cua Keypad do: 
-	Key = KEYPAD3X4_Readkey(&KeyPad);
+	Key = KEYPAD_Readkey(&KeyPad);
 - Pinmap Keypad 3x4: COL1 COL2 COL3 ROW1 ROW2 ROW3 ROW4
 											3		  1		5		 2		7		 6		4
 ******************************************************************************************************************/
@@ -28,7 +28,7 @@ static void KEYPAD_Delay(uint16_t Time)
 {
 	HAL_Delay(Time);
 }
-void KEYPAD3X4_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
+void KEYPAD_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 										GPIO_TypeDef* COL1_PORT, uint32_t COL1_PIN, 
 										GPIO_TypeDef* COL2_PORT, uint32_t COL2_PIN,
 										GPIO_TypeDef* COL3_PORT, uint32_t COL3_PIN,
@@ -65,7 +65,7 @@ void KEYPAD3X4_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 	HAL_GPIO_WritePin(KEYPAD->ColPort[1],KEYPAD->ColPins[1],GPIO_PIN_SET);
 	HAL_GPIO_WritePin(KEYPAD->ColPort[2],KEYPAD->ColPins[2],GPIO_PIN_SET);
 }
-char KEYPAD3X4_Readkey(KEYPAD_Name* KEYPAD) // Scan Colums
+char KEYPAD_Readkey(KEYPAD_Name* KEYPAD) // Scan Colums
 {
 	KEYPAD->Value = 0;
 	for(int colum = 0; colum < NUMCOLS; colum++)

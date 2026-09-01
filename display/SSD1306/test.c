@@ -6,7 +6,7 @@
  */
 
 #include "test.h"
-#include "OLED_LCD_SSD1306.h"
+#include "SSD1306.h"
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 extern SSD1306_Name SSD1306;
 void TestLines(uint8_t color)

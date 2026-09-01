@@ -1,6 +1,6 @@
 
-#ifndef __ST7735_SPI_H
-#define __ST7735_SPI_H
+#ifndef __ST7735_H
+#define __ST7735_H
 #include "Platform.h"
 #include <stdbool.h>
 #include "fonts.h"
