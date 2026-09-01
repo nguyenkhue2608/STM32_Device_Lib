@@ -1,4 +1,19 @@
-
+/**
+ * @file    rc522.h
+ * @brief   MFRC522 13.56 MHz RFID / NFC reader (MIFARE), SPI.
+ *
+ * Requires: one SPI bus + CS GPIO.
+ *
+ * Usage:
+ *   MFRC522_Device rc;
+ *   MFRC522_Init(&rc, &hspi1, CS_GPIO_Port, CS_Pin);
+ *   uint8_t uid[5];
+ *   if (MFRC522_Check(&rc, uid) == MI_OK) { ... card present, uid[0..4] ... }
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __RC522_H
 #define __RC522_H
 
@@ -116,18 +131,18 @@ typedef struct
 	GPIO_TypeDef*	CS_PORT;
 	uint16_t CS_PIN;
 	uint8_t CardID[5];
-}MFRC522_Name;
+}MFRC522_Device;
 
-void MFRC522_Init(MFRC522_Name* MFRC522, SPI_HandleTypeDef* SPI_In, GPIO_TypeDef*	CS_PORT, uint16_t CS_PIN);
-MFRC522_Status_t MFRC522_Check(MFRC522_Name* MFRC522, uint8_t* id);
-MFRC522_Status_t MFRC522_Compare(MFRC522_Name* MFRC522, uint8_t* CardID, uint8_t* CompareID);
-MFRC522_Status_t MFRC522_Request(MFRC522_Name* MFRC522, uint8_t reqMode, uint8_t* TagType) ;
-MFRC522_Status_t MFRC522_ToCard(MFRC522_Name* MFRC522, uint8_t command, uint8_t* sendData, uint8_t sendLen, uint8_t* backData, uint16_t* backLen);
-MFRC522_Status_t MFRC522_Anticoll(MFRC522_Name* MFRC522, uint8_t* serNum);
-void MFRC522_CalculateCRC(MFRC522_Name* MFRC522, uint8_t*  pIndata, uint8_t len, uint8_t* pOutData);
-uint8_t MFRC522_SelectTag(MFRC522_Name* MFRC522, uint8_t* serNum) ;
-MFRC522_Status_t MFRC522_Auth(MFRC522_Name* MFRC522, uint8_t authMode, uint8_t BlockAddr, uint8_t* Sectorkey, uint8_t* serNum);
-MFRC522_Status_t MFRC522_Read(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t* recvData);
-MFRC522_Status_t MFRC522_Write(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t* writeData);
-void MFRC522_Halt(MFRC522_Name* MFRC522);
+void MFRC522_Init(MFRC522_Device* MFRC522, SPI_HandleTypeDef* SPI_In, GPIO_TypeDef*	CS_PORT, uint16_t CS_PIN);
+MFRC522_Status_t MFRC522_Check(MFRC522_Device* MFRC522, uint8_t* id);
+MFRC522_Status_t MFRC522_Compare(MFRC522_Device* MFRC522, uint8_t* CardID, uint8_t* CompareID);
+MFRC522_Status_t MFRC522_Request(MFRC522_Device* MFRC522, uint8_t reqMode, uint8_t* TagType) ;
+MFRC522_Status_t MFRC522_ToCard(MFRC522_Device* MFRC522, uint8_t command, uint8_t* sendData, uint8_t sendLen, uint8_t* backData, uint16_t* backLen);
+MFRC522_Status_t MFRC522_Anticoll(MFRC522_Device* MFRC522, uint8_t* serNum);
+void MFRC522_CalculateCRC(MFRC522_Device* MFRC522, uint8_t*  pIndata, uint8_t len, uint8_t* pOutData);
+uint8_t MFRC522_SelectTag(MFRC522_Device* MFRC522, uint8_t* serNum) ;
+MFRC522_Status_t MFRC522_Auth(MFRC522_Device* MFRC522, uint8_t authMode, uint8_t BlockAddr, uint8_t* Sectorkey, uint8_t* serNum);
+MFRC522_Status_t MFRC522_Read(MFRC522_Device* MFRC522, uint8_t blockAddr, uint8_t* recvData);
+MFRC522_Status_t MFRC522_Write(MFRC522_Device* MFRC522, uint8_t blockAddr, uint8_t* writeData);
+void MFRC522_Halt(MFRC522_Device* MFRC522);
 #endif

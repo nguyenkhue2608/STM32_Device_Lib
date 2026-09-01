@@ -1,9 +1,17 @@
+/**
+ * @file    led7seg.c
+ * @brief   Multiplexed 7-segment LED display (up to 4 digits) - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "led7seg.h"
 
 char AnodeNumber[] = {0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0x8F,0x80,0x90,0x80}; //0 - 9,dp
 char CathodeNumber[] = {0x3F,0x06,0x5B,0x40,0x66,0x6D,0x7D,0x07,0x7F,0x6F,0x7F}; //0 - 9,dp
 
-void LED7SEG_Init(LED7SEG_Device_Name* LED7SEG, LED7TYPE Led7Type,
+void LED7SEG_Init(LED7SEG_Device* LED7SEG, LED7TYPE Led7Type,
 											GPIO_TypeDef* SEG_A,  uint16_t SEG_A_Pin,
 											GPIO_TypeDef* SEG_B,  uint16_t SEG_B_Pin,
 											GPIO_TypeDef* SEG_C,  uint16_t SEG_C_Pin,
@@ -45,7 +53,7 @@ void LED7SEG_InitScan(LED7SEG_Num* LED7_NUM, GPIO_TypeDef* LED1, uint16_t LED1_p
 	LED7_NUM->LED3_pin = LED3_pin;
 	LED7_NUM->LED4_pin = LED4_pin;
 }
-void LED7SEG_WriteOneNumber(LED7SEG_Device_Name* LED7SEG, uint8_t number)
+void LED7SEG_WriteOneNumber(LED7SEG_Device* LED7SEG, uint8_t number)
 {
 	if(LED7SEG->Led7Type == ANODE)
 	{
@@ -81,7 +89,7 @@ LED7SEG_NumberInt LED7SEG_ConvertInt(uint32_t number) //12345
 	numberInt.Uints = (((number%10000)%1000)%100)%10; //5
 	return numberInt;
 }
-void LED7SEG_Scan4Led(LED7SEG_Num* LED7_NUM, LED7SEG_Device_Name* LED7SEG, uint16_t number)
+void LED7SEG_Scan4Led(LED7SEG_Num* LED7_NUM, LED7SEG_Device* LED7SEG, uint16_t number)
 {
 	LED7SEG_NumberInt number_convert;
 	number_convert = LED7SEG_ConvertInt(number);

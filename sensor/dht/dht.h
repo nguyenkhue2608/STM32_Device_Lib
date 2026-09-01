@@ -1,18 +1,19 @@
-/******************************************************************************************************************
-@File:    DHT11 / DHT22 Sensor
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-Huong dan su dung:
-- Chan DATA noi voi 1 kenh timer o che do Input Capture (TIMx_CHy), moi tick = 1us
-  (Prescaler = TIMxCLK/1_000_000 - 1, Period = 0xFFFF). Chan can dien tro keo len ~4.7k.
-- Khoi tao:
-    DHT_Name dht1;
-    DHT_Init(&dht1, DHT11, &htim2, TIM_CHANNEL_1, DHT_GPIO_Port, DHT_Pin);
-- Doc du lieu (tra ve 1 neu OK va checksum dung, 0 neu loi/timeout):
-    if (DHT_ReadTempHum(&dht1)) { ... dht1.Temp, dht1.Humi ... }
-******************************************************************************************************************/
+/**
+ * @file    dht.h
+ * @brief   DHT11 / DHT22 temperature & humidity sensor.
+ *
+ * Requires: one GPIO for DATA (~4.7k pull-up) + one timer channel in Input Capture mode,
+ *          1 us/tick (Prescaler = TIMxCLK/1_000_000 - 1, Period = 0xFFFF).
+ *
+ * Usage:
+ *   DHT_Device dht;
+ *   DHT_Init(&dht, DHT11, &htim2, TIM_CHANNEL_1, DHT_GPIO_Port, DHT_Pin);
+ *   if (DHT_ReadTempHum(&dht)) { ... dht.Temp, dht.Humi ... }
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __DHT_H
 #define __DHT_H
 
@@ -38,10 +39,10 @@ typedef struct
 	uint16_t           Pin;
 	float              Temp;
 	float              Humi;
-} DHT_Name;
+} DHT_Device;
 
-void    DHT_Init(DHT_Name* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_t Channel,
+void    DHT_Init(DHT_Device* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_t Channel,
                  GPIO_TypeDef* DH_PORT, uint16_t DH_Pin);
-uint8_t DHT_ReadTempHum(DHT_Name* DHT);   /*!< 1 = OK, 0 = loi/timeout/checksum sai */
+uint8_t DHT_ReadTempHum(DHT_Device* DHT);   /*!< 1 = OK, 0 = loi/timeout/checksum sai */
 
 #endif

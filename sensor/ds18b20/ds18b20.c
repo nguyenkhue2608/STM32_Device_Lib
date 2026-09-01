@@ -1,12 +1,11 @@
-/******************************************************************************************************************
-@File:    DS18B20 Sensor
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-1-Wire: master tu tao cac khe thoi gian (reset 480us, write 60us, doc mau trong 15us).
-Delay micro-giay lay tu bo dem chu ky DWT (Cortex-M3/M4), delay milli-giay dung HAL_Delay.
-******************************************************************************************************************/
+/**
+ * @file    ds18b20.c
+ * @brief   DS18B20 1-Wire temperature sensor - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "ds18b20.h"
 
 //************************** Low Level Layer ********************************************************//
@@ -25,7 +24,7 @@ static void DS18B20_DelayUs(uint32_t us)
 	while ((DWT->CYCCNT - start) < ticks) { }
 }
 
-static void DS18B20_SetPinOut(DS18B20_Name* DS18B20)
+static void DS18B20_SetPinOut(DS18B20_Device* DS18B20)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin   = DS18B20->Pin;
@@ -34,7 +33,7 @@ static void DS18B20_SetPinOut(DS18B20_Name* DS18B20)
 	HAL_GPIO_Init(DS18B20->PORT, &GPIO_InitStruct);
 }
 
-static void DS18B20_SetPinIn(DS18B20_Name* DS18B20)
+static void DS18B20_SetPinIn(DS18B20_Device* DS18B20)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin  = DS18B20->Pin;
@@ -43,19 +42,19 @@ static void DS18B20_SetPinIn(DS18B20_Name* DS18B20)
 	HAL_GPIO_Init(DS18B20->PORT, &GPIO_InitStruct);
 }
 
-static void DS18B20_WritePin(DS18B20_Name* DS18B20, uint8_t Value)
+static void DS18B20_WritePin(DS18B20_Device* DS18B20, uint8_t Value)
 {
 	HAL_GPIO_WritePin(DS18B20->PORT, DS18B20->Pin, (GPIO_PinState)Value);
 }
 
-static uint8_t DS18B20_ReadPin(DS18B20_Name* DS18B20)
+static uint8_t DS18B20_ReadPin(DS18B20_Device* DS18B20)
 {
 	return HAL_GPIO_ReadPin(DS18B20->PORT, DS18B20->Pin);
 }
 
 //********************************* Middle level Layer ****************************************************//
 
-static uint8_t DS18B20_Start(DS18B20_Name* DS18B20)
+static uint8_t DS18B20_Start(DS18B20_Device* DS18B20)
 {
 	uint8_t Response = 0;
 
@@ -71,7 +70,7 @@ static uint8_t DS18B20_Start(DS18B20_Name* DS18B20)
 	return Response;
 }
 
-static void DS18B20_WriteBit(DS18B20_Name* DS18B20, uint8_t bit)
+static void DS18B20_WriteBit(DS18B20_Device* DS18B20, uint8_t bit)
 {
 	if (bit)   /* Write 1: keo xuong ~2us roi tha, du khe 60us */
 	{
@@ -91,7 +90,7 @@ static void DS18B20_WriteBit(DS18B20_Name* DS18B20, uint8_t bit)
 	}
 }
 
-static uint8_t DS18B20_ReadBit(DS18B20_Name* DS18B20)
+static uint8_t DS18B20_ReadBit(DS18B20_Device* DS18B20)
 {
 	uint8_t bit;
 
@@ -105,14 +104,14 @@ static uint8_t DS18B20_ReadBit(DS18B20_Name* DS18B20)
 	return bit;
 }
 
-static void DS18B20_Write(DS18B20_Name* DS18B20, uint8_t Data)
+static void DS18B20_Write(DS18B20_Device* DS18B20, uint8_t Data)
 {
 	int i;
 	for (i = 0; i < 8; i++)
 		DS18B20_WriteBit(DS18B20, (Data >> i) & 0x01);
 }
 
-static uint8_t DS18B20_Read(DS18B20_Name* DS18B20)
+static uint8_t DS18B20_Read(DS18B20_Device* DS18B20)
 {
 	uint8_t Value = 0;
 	int i;
@@ -123,14 +122,14 @@ static uint8_t DS18B20_Read(DS18B20_Name* DS18B20)
 
 //************************** High Level Layer ********************************************************//
 
-void DS18B20_Init(DS18B20_Name* DS18B20, GPIO_TypeDef* DS_PORT, uint16_t DS_Pin)
+void DS18B20_Init(DS18B20_Device* DS18B20, GPIO_TypeDef* DS_PORT, uint16_t DS_Pin)
 {
 	DS18B20->PORT = DS_PORT;
 	DS18B20->Pin  = DS_Pin;
 	DS18B20_DWT_Init();
 }
 
-float DS18B20_ReadTemp(DS18B20_Name* DS18B20)
+float DS18B20_ReadTemp(DS18B20_Device* DS18B20)
 {
 	uint8_t  Temp1, Temp2;
 	int16_t  raw;

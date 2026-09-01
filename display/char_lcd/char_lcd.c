@@ -1,27 +1,11 @@
-/******************************************************************************************************************
-@File:  	CHAR_LCD 8BIT (Character LCD 8Bit Mode)
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-Huong dan su dung:
-- Su dung thu vien HAL
-- Khoi tao bien LCD: CHAR_LCD_Name LCD1;
-- Khoi tao LCD do:
-Che do 8 bit
-CHAR_LCD_8BIT_Init(&LCD1, 16, 2, CS_GPIO_Port, CS_Pin, EN_GPIO_Port, EN_Pin,
-									D0_GPIO_Port, D0_Pin, D1_GPIO_Port, D1_Pin,
-									D2_GPIO_Port, D2_Pin, D3_GPIO_Port, D3_Pin,
-									D4_GPIO_Port, D4_Pin, D5_GPIO_Port, D5_Pin,
-									D6_GPIO_Port, D6_Pin, D7_GPIO_Port, D7_Pin);
-Che do 4 bit									
-CHAR_LCD_4BIT_Init(&LCD1, 16, 2, CS_GPIO_Port, CS_Pin, EN_GPIO_Port, EN_Pin,
-									D4_GPIO_Port, D4_Pin, D5_GPIO_Port, D5_Pin,
-									D6_GPIO_Port, D6_Pin, D7_GPIO_Port, D7_Pin);
-- Su dung cac ham truyen dia chi cua LCD do: 
-CHAR_LCD__SetCursor(&LCD1, 0, 0);
-CHAR_LCD_WriteString(&LCD1,"Hello anh em");	
-******************************************************************************************************************/
+/**
+ * @file    char_lcd.c
+ * @brief   HD44780 character LCD, 4-bit / 8-bit parallel (LCD1602 / LCD2004 / LiquidCrystal) - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "char_lcd.h"
 
 
@@ -31,7 +15,7 @@ static void CHAR_LCD_Delay(uint16_t Time)
 	HAL_Delay(Time);
 	
 }
-static void CHAR_LCD_Write8(CHAR_LCD_Name* LCD, uint8_t Data, uint8_t Mode)
+static void CHAR_LCD_Write8(CHAR_LCD_Device* LCD, uint8_t Data, uint8_t Mode)
 {
 	if(Mode == CHAR_LCD_COMMAND)
 	{
@@ -57,7 +41,7 @@ static void CHAR_LCD_Write8(CHAR_LCD_Name* LCD, uint8_t Data, uint8_t Mode)
 	HAL_GPIO_WritePin(LCD->EN_PORT, LCD->EN_PIN, GPIO_PIN_RESET);
 	CHAR_LCD_Delay(1);
 }
-static void CHAR_LCD_Write4(CHAR_LCD_Name* LCD, uint8_t Data, uint8_t Mode)
+static void CHAR_LCD_Write4(CHAR_LCD_Device* LCD, uint8_t Data, uint8_t Mode)
 {
 	uint8_t Data_H = Data >>4;
 	uint8_t Data_L = Data;
@@ -94,7 +78,7 @@ static void CHAR_LCD_Write4(CHAR_LCD_Name* LCD, uint8_t Data, uint8_t Mode)
 	CHAR_LCD_Delay(1);
 }
 //************************ High Level Function *****************************************//
-void CHAR_LCD_8BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
+void CHAR_LCD_8BIT_Init(CHAR_LCD_Device* LCD, uint8_t Colum, uint8_t Row,
 									GPIO_TypeDef* RS_PORT, uint16_t RS_PIN, GPIO_TypeDef* EN_PORT, uint16_t EN_PIN,
 									GPIO_TypeDef* D0_PORT, uint16_t D0_PIN, GPIO_TypeDef* D1_PORT, uint16_t D1_PIN,
 									GPIO_TypeDef* D2_PORT, uint16_t D2_PIN, GPIO_TypeDef* D3_PORT, uint16_t D3_PIN,
@@ -139,7 +123,7 @@ void CHAR_LCD_8BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
 	CHAR_LCD_Write8(LCD, LCD_RETURNHOME,CHAR_LCD_COMMAND);
 }
 
-void CHAR_LCD_4BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
+void CHAR_LCD_4BIT_Init(CHAR_LCD_Device* LCD, uint8_t Colum, uint8_t Row,
 									GPIO_TypeDef* RS_PORT, uint16_t RS_PIN, GPIO_TypeDef* EN_PORT, uint16_t EN_PIN,
 									GPIO_TypeDef* D4_PORT, uint16_t D4_PIN, GPIO_TypeDef* D5_PORT, uint16_t D5_PIN,
 									GPIO_TypeDef* D6_PORT, uint16_t D6_PIN, GPIO_TypeDef* D7_PORT, uint16_t D7_PIN)
@@ -180,7 +164,7 @@ void CHAR_LCD_4BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
 	CHAR_LCD_Write4(LCD, LCD_CLEARDISPLAY,CHAR_LCD_COMMAND);
 	CHAR_LCD_Write4(LCD, LCD_RETURNHOME,CHAR_LCD_COMMAND);
 }
-void CHAR_LCD_SetCursor(CHAR_LCD_Name* LCD, uint8_t Xpos, uint8_t Ypos)
+void CHAR_LCD_SetCursor(CHAR_LCD_Device* LCD, uint8_t Xpos, uint8_t Ypos)
 {
 	
 	uint8_t DRAM_ADDRESS = 0x00;
@@ -203,7 +187,7 @@ void CHAR_LCD_SetCursor(CHAR_LCD_Name* LCD, uint8_t Xpos, uint8_t Ypos)
 		CHAR_LCD_Write4(LCD, LCD_SETDDRAMADDR|DRAM_ADDRESS, CHAR_LCD_COMMAND);
 	}
 }
-void CHAR_LCD_WriteChar(CHAR_LCD_Name* LCD, char character)
+void CHAR_LCD_WriteChar(CHAR_LCD_Device* LCD, char character)
 {
 	if(LCD->MODE == LCD_8BITMODE)
 	{
@@ -214,11 +198,11 @@ void CHAR_LCD_WriteChar(CHAR_LCD_Name* LCD, char character)
 		CHAR_LCD_Write4(LCD, character, CHAR_LCD_DATA);
 	}
 }
-void CHAR_LCD_WriteString(CHAR_LCD_Name* LCD, char *String)
+void CHAR_LCD_WriteString(CHAR_LCD_Device* LCD, char *String)
 {
 	while(*String)CHAR_LCD_WriteChar(LCD, *String++);
 }
-void CHAR_LCD_Clear(CHAR_LCD_Name* LCD)
+void CHAR_LCD_Clear(CHAR_LCD_Device* LCD)
 {
 	if(LCD->MODE == LCD_8BITMODE)
 	{
@@ -230,7 +214,7 @@ void CHAR_LCD_Clear(CHAR_LCD_Name* LCD)
 	}
 	CHAR_LCD_Delay(5);
 }
-void CHAR_LCD_ReturnHome(CHAR_LCD_Name* LCD)
+void CHAR_LCD_ReturnHome(CHAR_LCD_Device* LCD)
 {
 	if(LCD->MODE == LCD_8BITMODE)
 	{
@@ -242,7 +226,7 @@ void CHAR_LCD_ReturnHome(CHAR_LCD_Name* LCD)
 	}
 	CHAR_LCD_Delay(5);
 }
-void CHAR_LCD_CursorOn(CHAR_LCD_Name* LCD)
+void CHAR_LCD_CursorOn(CHAR_LCD_Device* LCD)
 {
 	LCD->DISPLAYCTRL |= LCD_CURSORON;
 	if(LCD->MODE == LCD_8BITMODE)
@@ -254,7 +238,7 @@ void CHAR_LCD_CursorOn(CHAR_LCD_Name* LCD)
 		CHAR_LCD_Write4(LCD, LCD->DISPLAYCTRL, CHAR_LCD_COMMAND);
 	}
 }
-void CHAR_LCD_CursorOff(CHAR_LCD_Name* LCD)
+void CHAR_LCD_CursorOff(CHAR_LCD_Device* LCD)
 {
 	LCD->DISPLAYCTRL &= ~LCD_CURSORON;
 	if(LCD->MODE == LCD_8BITMODE)
@@ -266,7 +250,7 @@ void CHAR_LCD_CursorOff(CHAR_LCD_Name* LCD)
 		CHAR_LCD_Write4(LCD, LCD->DISPLAYCTRL, CHAR_LCD_COMMAND);
 	}
 }
-void CHAR_LCD_BlinkOn(CHAR_LCD_Name* LCD)
+void CHAR_LCD_BlinkOn(CHAR_LCD_Device* LCD)
 {
 	LCD->DISPLAYCTRL |= LCD_BLINKON;
 	if(LCD->MODE == LCD_8BITMODE)
@@ -278,7 +262,7 @@ void CHAR_LCD_BlinkOn(CHAR_LCD_Name* LCD)
 		CHAR_LCD_Write4(LCD, LCD->DISPLAYCTRL, CHAR_LCD_COMMAND);
 	}
 }
-void CHAR_LCD_BlinkOff(CHAR_LCD_Name* LCD)
+void CHAR_LCD_BlinkOff(CHAR_LCD_Device* LCD)
 {
 	LCD->DISPLAYCTRL &= ~LCD_BLINKON;
 	if(LCD->MODE == LCD_8BITMODE)

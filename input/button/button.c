@@ -1,21 +1,15 @@
-/*****************************************************************************************************
-@File:		Button 
-@Author:  khuenguyen
-@website: khuenguyencreator.com
-@youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-@huong dan su dung:
-- Cau hinh cac chan vao Button la Input_pullup
-- Khoi tao Bien luu gia tri Button:
-	BUTTON_Name Button1;
-- Truyen vao chan ten va chan button do
-	BUTTON_Init(&Button1, Button_GPIO_Port, Button_Pin);
-- Doc gia tri Button
-	Status = Read_Button(&Button1);
-*********************** *****************************************************************************/
+/**
+ * @file    button.c
+ * @brief   Debounced push-button (single / double / long press) - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "button.h"
 
 // ************************** Low Level Layer *****************************************************//
-static uint8_t BUTTON_ReadPin(BUTTON_Name* Button)
+static uint8_t BUTTON_ReadPin(BUTTON_Device* Button)
 {
 	return HAL_GPIO_ReadPin(Button->BUTTON_PORT, Button->BUTTON_Pin);
 }
@@ -25,13 +19,13 @@ static void BUTTON_DelayMs(uint16_t Time)
 }
 
 // ************************** High Level Layer *****************************************************//
-void BUTTON_Init(BUTTON_Name* Button, GPIO_TypeDef* BUTTON_PORT, uint16_t BUTTON_Pin)
+void BUTTON_Init(BUTTON_Device* Button, GPIO_TypeDef* BUTTON_PORT, uint16_t BUTTON_Pin)
 {
 	Button->BUTTON_PORT = BUTTON_PORT;
 	Button->BUTTON_Pin = BUTTON_Pin;
 }
 
-BUTTON_STATE BUTTON_Read(BUTTON_Name* Button)
+BUTTON_STATE BUTTON_Read(BUTTON_Device* Button)
 {
 	Button->State = NO_CLICK;
 	while(BUTTON_ReadPin(Button) == 0)

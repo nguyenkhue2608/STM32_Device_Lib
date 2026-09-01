@@ -1,6 +1,13 @@
-
+/**
+ * @file    joystick.c
+ * @brief   Analog 2-axis joystick with push-button - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "joystick.h"
-static void ADC_GetValue(JOYSTICK_Name* JT)
+static void ADC_GetValue(JOYSTICK_Device* JT)
 {
 	HAL_ADC_Start_DMA(JT->ADC, (uint32_t*)JT->ADCvalue, 2);
 }
@@ -8,7 +15,7 @@ static void JOYSTICK_DelayMs(uint16_t Time)
 {
 	HAL_Delay(Time);
 }
-void JOYSTICK_Init(JOYSTICK_Name* JT, ADC_HandleTypeDef* ADC_In, uint32_t Xchannel, uint32_t Ychannel, 
+void JOYSTICK_Init(JOYSTICK_Device* JT, ADC_HandleTypeDef* ADC_In, uint32_t Xchannel, uint32_t Ychannel, 
 										GPIO_TypeDef* Button_Port, uint16_t Button_Pin)
 {
 	JT->ADC = ADC_In;
@@ -17,7 +24,7 @@ void JOYSTICK_Init(JOYSTICK_Name* JT, ADC_HandleTypeDef* ADC_In, uint32_t Xchann
 	JT->Button_Port = Button_Port;
 	JT->Button_Pin = Button_Pin;
 }
-void JOYSTICK_GetValue(JOYSTICK_Name* JT)
+void JOYSTICK_GetValue(JOYSTICK_Device* JT)
 {
 	ADC_GetValue(JT);
 	JOYSTICK_DelayMs(20);
@@ -46,7 +53,7 @@ void JOYSTICK_GetValue(JOYSTICK_Name* JT)
 		JT->Ydirect = Y_Inc;
 	}
 }
-JOYSTICK_Value JOYSTICK_GetButton(JOYSTICK_Name* JT)
+JOYSTICK_Value JOYSTICK_GetButton(JOYSTICK_Device* JT)
 {
 	//JT->ButtonState = noPress;
 	if(!HAL_GPIO_ReadPin(JT->Button_Port, JT->Button_Pin))

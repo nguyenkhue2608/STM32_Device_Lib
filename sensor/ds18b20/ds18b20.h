@@ -1,19 +1,19 @@
-/******************************************************************************************************************
-@File:    DS18B20 Sensor
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-Huong dan su dung:
-- Chan DATA la 1 chan GPIO bat ky, co dien tro keo len ~4.7k.
-- Khoi tao:
-    DS18B20_Name ds1;
-    DS18B20_Init(&ds1, DS18B20_GPIO_Port, DS18B20_Pin);
-- Doc nhiet do (do C):
-    float t = DS18B20_ReadTemp(&ds1);
-
-Delay micro-giay lay tu DWT cycle counter (Cortex-M3/M4), khong can timer.
-******************************************************************************************************************/
+/**
+ * @file    ds18b20.h
+ * @brief   DS18B20 1-Wire temperature sensor.
+ *
+ * Requires: one GPIO for DATA (~4.7k pull-up); us delays come from the DWT cycle counter
+ *          (Cortex-M3/M4/M7).
+ *
+ * Usage:
+ *   DS18B20_Device ds;
+ *   DS18B20_Init(&ds, DS18B20_GPIO_Port, DS18B20_Pin);
+ *   float t = DS18B20_ReadTemp(&ds);
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __DS18B20_H
 #define __DS18B20_H
 
@@ -24,7 +24,7 @@ typedef struct
 	uint16_t      Pin;
 	GPIO_TypeDef* PORT;
 	float         Temp;
-} DS18B20_Name;
+} DS18B20_Device;
 
 #define DS18B20_READROM      0x33
 #define DS18B20_MATCHROM     0x55
@@ -37,7 +37,7 @@ typedef struct
 #define DS18B20_CONVERT      0x44
 #define DS18B20_READPWR      0xB4
 
-void  DS18B20_Init(DS18B20_Name* DS18B20, GPIO_TypeDef* DS_PORT, uint16_t DS_Pin);
-float DS18B20_ReadTemp(DS18B20_Name* DS18B20);
+void  DS18B20_Init(DS18B20_Device* DS18B20, GPIO_TypeDef* DS_PORT, uint16_t DS_Pin);
+float DS18B20_ReadTemp(DS18B20_Device* DS18B20);
 
 #endif

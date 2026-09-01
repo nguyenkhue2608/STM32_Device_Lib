@@ -1,3 +1,19 @@
+/**
+ * @file    char_lcd_i2c.h
+ * @brief   HD44780 character LCD via a PCF8574 I2C backpack.
+ *
+ * Requires: one I2C bus. Pass the 8-bit address (e.g. 0x4E for a 0x27 backpack).
+ *
+ * Usage:
+ *   CHAR_LCD_I2C_Device lcd;
+ *   CHAR_LCD_I2C_Init(&lcd, &hi2c1, 0x4E, 20, 4);
+ *   CHAR_LCD_I2C_SetCursor(&lcd, 0, 1);
+ *   CHAR_LCD_I2C_WriteString(&lcd, "Hello");
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __CHAR_LCD_I2C_H
 #define __CHAR_LCD_I2C_H
 
@@ -65,17 +81,17 @@ typedef struct
 	uint8_t CURSORSHIFT;
 	uint8_t FUNCTIONSET;
 	uint8_t BACKLIGHT;
-}CHAR_LCD_I2C_Name;
-void CHAR_LCD_I2C_Init(CHAR_LCD_I2C_Name* LCD, I2C_HandleTypeDef* hi2c_CHAR_LCD, uint8_t Address, uint8_t Colums, uint8_t Rows);
-void CHAR_LCD_I2C_SetCursor(CHAR_LCD_I2C_Name* LCD, uint8_t Xpos, uint8_t YPos);
-void CHAR_LCD_I2C_WriteChar(CHAR_LCD_I2C_Name* LCD, char character);
-void CHAR_LCD_I2C_WriteString(CHAR_LCD_I2C_Name* LCD, char *String);
-void CHAR_LCD_I2C_Clear(CHAR_LCD_I2C_Name* LCD);
-void CHAR_LCD_I2C_ReturnHome(CHAR_LCD_I2C_Name* LCD);
-void CHAR_LCD_I2C_CursorOn(CHAR_LCD_I2C_Name* LCD);
-void CHAR_LCD_I2C_CursorOff(CHAR_LCD_I2C_Name* LCD);
-void CHAR_LCD_I2C_BlinkOn(CHAR_LCD_I2C_Name* LCD);
-void CHAR_LCD_I2C_BlinkOff(CHAR_LCD_I2C_Name* LCD);
+}CHAR_LCD_I2C_Device;
+void CHAR_LCD_I2C_Init(CHAR_LCD_I2C_Device* LCD, I2C_HandleTypeDef* hi2c_CHAR_LCD, uint8_t Address, uint8_t Colums, uint8_t Rows);
+void CHAR_LCD_I2C_SetCursor(CHAR_LCD_I2C_Device* LCD, uint8_t Xpos, uint8_t YPos);
+void CHAR_LCD_I2C_WriteChar(CHAR_LCD_I2C_Device* LCD, char character);
+void CHAR_LCD_I2C_WriteString(CHAR_LCD_I2C_Device* LCD, char *String);
+void CHAR_LCD_I2C_Clear(CHAR_LCD_I2C_Device* LCD);
+void CHAR_LCD_I2C_ReturnHome(CHAR_LCD_I2C_Device* LCD);
+void CHAR_LCD_I2C_CursorOn(CHAR_LCD_I2C_Device* LCD);
+void CHAR_LCD_I2C_CursorOff(CHAR_LCD_I2C_Device* LCD);
+void CHAR_LCD_I2C_BlinkOn(CHAR_LCD_I2C_Device* LCD);
+void CHAR_LCD_I2C_BlinkOff(CHAR_LCD_I2C_Device* LCD);
 void I2C_LCD_setCursor(uint8_t col, uint8_t row);
 void I2C_LCD_SendString(char *str);
 #endif

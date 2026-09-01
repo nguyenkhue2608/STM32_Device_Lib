@@ -1,3 +1,19 @@
+/**
+ * @file    led7seg.h
+ * @brief   Multiplexed 7-segment LED display (up to 4 digits).
+ *
+ * Requires: 8 GPIOs for segments A..H plus one GPIO per digit;
+ *          the scan function must be called repeatedly (e.g. from a timer).
+ *
+ * Usage:
+ *   LED7SEG_Device seg;   // fill seg.SEG_x from wiring
+ *   LED7SEG_Num digits;        // fill digits.LEDx from wiring
+ *   LED7SEG_Scan4Led(&digits, &seg, 1234);   // call repeatedly
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __LED7SEG_H
 #define __LED7SEG_H
 
@@ -28,7 +44,7 @@ typedef struct {
 	uint16_t SEG_G_Pin;	
 	GPIO_TypeDef* SEG_H;  
 	uint16_t SEG_H_Pin;
-}LED7SEG_Device_Name;
+}LED7SEG_Device;
 
 typedef struct {  
 	GPIO_TypeDef* LED1;  
@@ -49,7 +65,7 @@ typedef struct {
 	uint8_t Uints;
 }LED7SEG_NumberInt;
 
-void LED7SEG_Init(LED7SEG_Device_Name* LED7SEG, LED7TYPE Led7Type,
+void LED7SEG_Init(LED7SEG_Device* LED7SEG, LED7TYPE Led7Type,
 											GPIO_TypeDef* SEG_A,  uint16_t SEG_A_Pin,
 											GPIO_TypeDef* SEG_B,  uint16_t SEG_B_Pin,
 											GPIO_TypeDef* SEG_C,  uint16_t SEG_C_Pin,
@@ -62,7 +78,7 @@ void LED7SEG_InitScan(LED7SEG_Num* LED7_NUM, GPIO_TypeDef* LED1, uint16_t LED1_p
 											GPIO_TypeDef* LED2, uint16_t LED2_pin,
 											GPIO_TypeDef* LED3, uint16_t LED3_pin, 
 											GPIO_TypeDef* LED4, uint16_t LED4_pin);
-void LED7SEG_WriteOneNumber(LED7SEG_Device_Name* LED7SEG, uint8_t number);
+void LED7SEG_WriteOneNumber(LED7SEG_Device* LED7SEG, uint8_t number);
 LED7SEG_NumberInt LED7SEG_ConvertInt(uint32_t number);
-void LED7SEG_Scan4Led(LED7SEG_Num* LED7_NUM, LED7SEG_Device_Name* LED7SEG, uint16_t number);
+void LED7SEG_Scan4Led(LED7SEG_Num* LED7_NUM, LED7SEG_Device* LED7SEG, uint16_t number);
 #endif

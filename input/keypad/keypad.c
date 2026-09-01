@@ -1,34 +1,17 @@
-/******************************************************************************************************************
-@File:  	Key Pad Module 3x4 4x4
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-Huong dan su dung:
-- Su dung thu vien HAL
-- Khoi tao cac chan Col Ouput, Cac chan Row là Input_Pull_UP
-- Khoi tao bien luu Keypad va keymap
-KEYPAD_Name KeyPad;
-char KEYMAP[NUMROWS][NUMCOLS] = {
-{'1','2','3'},
-{'4','5','6'},
-{'7','8','9'},
-{'*','0','#'}
-};
-- Khoi tao Keypad do:
-	KEYPAD_Init(&KeyPad, KEYMAP, GPIOA, GPIO_PIN_4, GPIOA, GPIO_PIN_5, GPIOA, GPIO_PIN_6, 
-																	GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1,
-																	GPIOA, GPIO_PIN_2, GPIOA, GPIO_PIN_3);
-- Su dung cac ham phai truyen dia chi cua Keypad do: 
-	Key = KEYPAD_Readkey(&KeyPad);
-- Pinmap Keypad 3x4: COL1 COL2 COL3 ROW1 ROW2 ROW3 ROW4
-											3		  1		5		 2		7		 6		4
-******************************************************************************************************************/
+/**
+ * @file    keypad.c
+ * @brief   Matrix keypad (3x4 / 4x4) scanner - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "keypad.h"
 static void KEYPAD_Delay(uint16_t Time)
 {
 	HAL_Delay(Time);
 }
-void KEYPAD_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
+void KEYPAD_Init(KEYPAD_Device* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 										GPIO_TypeDef* COL1_PORT, uint32_t COL1_PIN, 
 										GPIO_TypeDef* COL2_PORT, uint32_t COL2_PIN,
 										GPIO_TypeDef* COL3_PORT, uint32_t COL3_PIN,
@@ -65,7 +48,7 @@ void KEYPAD_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 	HAL_GPIO_WritePin(KEYPAD->ColPort[1],KEYPAD->ColPins[1],GPIO_PIN_SET);
 	HAL_GPIO_WritePin(KEYPAD->ColPort[2],KEYPAD->ColPins[2],GPIO_PIN_SET);
 }
-char KEYPAD_Readkey(KEYPAD_Name* KEYPAD) // Scan Colums
+char KEYPAD_Readkey(KEYPAD_Device* KEYPAD) // Scan Colums
 {
 	KEYPAD->Value = 0;
 	for(int colum = 0; colum < NUMCOLS; colum++)
@@ -88,7 +71,7 @@ char KEYPAD_Readkey(KEYPAD_Name* KEYPAD) // Scan Colums
 	return 0;
 }
 
-void KEYPAD3x4_Config(KEYPAD_Name* KEYPAD, char KEYMAP_Config[NUMROWS][NUMCOLS])
+void KEYPAD3x4_Config(KEYPAD_Device* KEYPAD, char KEYMAP_Config[NUMROWS][NUMCOLS])
 {
 	for(int colum = 0; colum < NUMCOLS; colum++)
 	{

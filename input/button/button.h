@@ -1,17 +1,18 @@
-/*****************************************************************************************************
-@File:		Button 
-@Author:  khuenguyen
-@website: khuenguyencreator.com
-@youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-@huong dan su dung:
-- Cau hinh cac chan vao Button la Input_pullup
-- Khoi tao Bien luu gia tri Button:
-	BUTTON_Name Button1;
-- Truyen vao chan ten va chan button do
-	BUTTON_Init(&Button1, Button_GPIO_Port, Button_Pin);
-- Doc gia tri Button
-	Status = Read_Button(&Button1);
-*********************** *****************************************************************************/
+/**
+ * @file    button.h
+ * @brief   Debounced push-button (single / double / long press).
+ *
+ * Requires: one GPIO configured as input pull-up.
+ *
+ * Usage:
+ *   BUTTON_Device btn;
+ *   BUTTON_Init(&btn, BUTTON_GPIO_Port, BUTTON_Pin);
+ *   BUTTON_STATE s = BUTTON_Read(&btn);
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __BUTTON_H
 #define __BUTTON_H
 
@@ -36,10 +37,10 @@ typedef struct {
 	uint8_t  isPress;
 	uint16_t timePress;
 	uint16_t timeDouble;
-}BUTTON_Name;
+}BUTTON_Device;
 
-void BUTTON_Init(BUTTON_Name* Button, GPIO_TypeDef* BUTTON_PORT, uint16_t BUTTON_Pin);
-BUTTON_STATE BUTTON_Read(BUTTON_Name* Button);
+void BUTTON_Init(BUTTON_Device* Button, GPIO_TypeDef* BUTTON_PORT, uint16_t BUTTON_Pin);
+BUTTON_STATE BUTTON_Read(BUTTON_Device* Button);
 
 #endif
 

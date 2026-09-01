@@ -1,12 +1,11 @@
-/*****************************************************************************************************
-@File:    SRF05 / HC-SR04 Ultrasonic Module
-@Author:  khuenguyen
-@website: khuenguyencreator.com
-@youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-Phat xung trigger 10us roi dung input capture bat canh len va canh xuong cua ECHO.
-Do rong xung echo (us) = t_fall - t_rise; khoang cach (cm) = do_rong / 58.
-*****************************************************************************************************/
+/**
+ * @file    srf05.c
+ * @brief   SRF05 / HC-SR04 ultrasonic distance sensor - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "srf05.h"
 
 //************************* Low Level Layer *********************************************************/
@@ -37,7 +36,7 @@ static uint32_t SRF05_TimFlag(uint32_t channel)
 	}
 }
 
-static uint8_t SRF05_WaitCapture(SRF05_Device_Name* SRF05, uint32_t* value)
+static uint8_t SRF05_WaitCapture(SRF05_Device* SRF05, uint32_t* value)
 {
 	uint32_t flag  = SRF05_TimFlag(SRF05->Channel);
 	uint32_t start = HAL_GetTick();
@@ -53,7 +52,7 @@ static uint8_t SRF05_WaitCapture(SRF05_Device_Name* SRF05, uint32_t* value)
 
 //************************* High Level Layer *******************************************************/
 
-uint8_t SRF05_Init(SRF05_Device_Name* SRF05, TIM_HandleTypeDef* Timer, uint32_t Channel,
+uint8_t SRF05_Init(SRF05_Device* SRF05, TIM_HandleTypeDef* Timer, uint32_t Channel,
                    GPIO_TypeDef* TRIGGER_GPIOx, uint16_t TRIGGER_GPIO_Pin)
 {
 	SRF05->Timer            = Timer;
@@ -68,7 +67,7 @@ uint8_t SRF05_Init(SRF05_Device_Name* SRF05, TIM_HandleTypeDef* Timer, uint32_t 
 	return (SRF05_Read(SRF05) >= 0.0f) ? 1 : 0;
 }
 
-float SRF05_Read(SRF05_Device_Name* SRF05)
+float SRF05_Read(SRF05_Device* SRF05)
 {
 	uint32_t t_rise, t_fall, width;
 

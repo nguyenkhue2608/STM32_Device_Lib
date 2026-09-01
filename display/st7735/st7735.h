@@ -1,4 +1,19 @@
-
+/**
+ * @file    st7735.h
+ * @brief   ST7735 TFT LCD (1.44" / 1.8", 128x160), SPI.
+ *
+ * Requires: one SPI bus + CS / DC / RES GPIOs. Set ST7735_SPI_PORT and the pin macros
+ *          in this header, and provide a Platform.h for the project.
+ *
+ * Usage:
+ *   ST7735_Init();
+ *   ST7735_FillScreen(ST7735_BLACK);
+ *   ST7735_WriteString(0, 0, "Hello", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __ST7735_H
 #define __ST7735_H
 #include "Platform.h"

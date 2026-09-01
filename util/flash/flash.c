@@ -1,3 +1,11 @@
+/**
+ * @file    flash.c
+ * @brief   Read / write the STM32 internal flash (last pages) for non-volatile storage - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "flash.h"
 
 void FLASH_WritePage(uint32_t startPage, uint32_t endPage, uint32_t data)

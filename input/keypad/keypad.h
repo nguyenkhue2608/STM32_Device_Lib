@@ -1,29 +1,21 @@
-
-/******************************************************************************************************************
-@File:  	Key Pad Module 3x4 4x4
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-Huong dan su dung:
-- Su dung thu vien HAL
-- Khoi tao cac chan Col Ouput, Cac chan Row là Input_Pull_UP
-- Khoi tao bien luu Keypad va keymap
-KEYPAD_Name KeyPad;
-char KEYMAP[NUMROWS][NUMCOLS] = {
-{'1','2','3'},
-{'4','5','6'},
-{'7','8','9'},
-{'*','0','#'}
-};
-- Khoi tao Keypad do:
-	KEYPAD_Init(&KeyPad, KEYMAP, GPIOA, GPIO_PIN_4, GPIOA, GPIO_PIN_5, GPIOA, GPIO_PIN_6, 
-																	GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1,
-																	GPIOA, GPIO_PIN_2, GPIOA, GPIO_PIN_3);
-- Su dung cac ham phai truyen dia chi cua Keypad do: 
-	Key = KEYPAD_Readkey(&KeyPad);
-- Pinmap Keypad 3x4: COL1 COL2 COL3 ROW1 ROW2 ROW3 ROW4
-											3		  1		5		 2		7		 6		4
-******************************************************************************************************************/
+/**
+ * @file    keypad.h
+ * @brief   Matrix keypad (3x4 / 4x4) scanner.
+ *
+ * Requires: column pins as output, row pins as input pull-up.
+ *          NUMROWS / NUMCOLS are compile-time constants in this header.
+ *
+ * Usage:
+ *   KEYPAD_Device kp;
+ *   char map[NUMROWS][NUMCOLS] = { {'1','2','3'}, {'4','5','6'},
+ *                                  {'7','8','9'}, {'*','0','#'} };
+ *   KEYPAD_Init(&kp, map, R0_Port,R0_Pin, ...3 more rows..., C0_Port,C0_Pin, C1..., C2...);
+ *   char k = KEYPAD_Readkey(&kp);   // 0 when nothing is pressed
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __KEYPAD_H
 #define __KEYPAD_H
 #include "stm32f1xx_hal.h"
@@ -38,9 +30,9 @@ typedef struct
 	GPIO_TypeDef* ColPort[NUMCOLS];
 	char MAP[NUMROWS][NUMCOLS];
 	char Value;
-}KEYPAD_Name;
+}KEYPAD_Device;
 
-void KEYPAD_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
+void KEYPAD_Init(KEYPAD_Device* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 										GPIO_TypeDef* COL1_PORT, uint32_t COL1_PIN, 
 										GPIO_TypeDef* COL2_PORT, uint32_t COL2_PIN,
 										GPIO_TypeDef* COL3_PORT, uint32_t COL3_PIN,
@@ -48,5 +40,5 @@ void KEYPAD_Init(KEYPAD_Name* KEYPAD, char KEYMAP[NUMROWS][NUMCOLS],
 										GPIO_TypeDef* ROW2_PORT, uint32_t ROW2_PIN,
 										GPIO_TypeDef* ROW3_PORT, uint32_t ROW3_PIN,
 										GPIO_TypeDef* ROW4_PORT, uint32_t ROW4_PIN);
-char KEYPAD_Readkey(KEYPAD_Name* KEYPAD);
+char KEYPAD_Readkey(KEYPAD_Device* KEYPAD);
 #endif

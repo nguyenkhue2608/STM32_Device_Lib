@@ -1,13 +1,11 @@
-/******************************************************************************************************************
-@File:    DHT11 / DHT22 Sensor
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-
-Doc bang input capture, chi bat canh xuong (STM32F1 khong ho tro bat 2 canh). Chu ky
-falling->falling la chu ky mot bit: ~77us = bit 0, ~120us = bit 1 (nguong DHT_BIT_PERIOD_US).
-Ngat bi khoa ~5 ms trong luc capture de vong poll khong bo lo canh.
-******************************************************************************************************************/
+/**
+ * @file    dht.c
+ * @brief   DHT11 / DHT22 temperature & humidity sensor - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "dht.h"
 
 #define DHT_CAPTURE_GUARD  40000U   /* so vong poll toi da cho 1 canh */
@@ -40,7 +38,7 @@ static uint32_t DHT_TimFlag(uint32_t channel)
 	}
 }
 
-static void DHT_SetPinOut(DHT_Name* DHT)
+static void DHT_SetPinOut(DHT_Device* DHT)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin   = DHT->Pin;
@@ -49,7 +47,7 @@ static void DHT_SetPinOut(DHT_Name* DHT)
 	HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
 }
 
-static void DHT_SetPinIn(DHT_Name* DHT)
+static void DHT_SetPinIn(DHT_Device* DHT)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	GPIO_InitStruct.Pin  = DHT->Pin;
@@ -58,7 +56,7 @@ static void DHT_SetPinIn(DHT_Name* DHT)
 	HAL_GPIO_Init(DHT->PORT, &GPIO_InitStruct);
 }
 
-static uint8_t DHT_WaitCapture(DHT_Name* DHT, uint32_t flag, uint32_t* value)
+static uint8_t DHT_WaitCapture(DHT_Device* DHT, uint32_t flag, uint32_t* value)
 {
 	uint32_t guard = 0;
 
@@ -73,7 +71,7 @@ static uint8_t DHT_WaitCapture(DHT_Name* DHT, uint32_t flag, uint32_t* value)
 
 //************************** High Level Layer ********************************************************//
 
-void DHT_Init(DHT_Name* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_t Channel,
+void DHT_Init(DHT_Device* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_t Channel,
               GPIO_TypeDef* DH_PORT, uint16_t DH_Pin)
 {
 	DHT->Type    = DHT_Type;
@@ -87,7 +85,7 @@ void DHT_Init(DHT_Name* DHT, uint8_t DHT_Type, TIM_HandleTypeDef* Timer, uint32_
 	DHT_SetPinIn(DHT);
 }
 
-uint8_t DHT_ReadTempHum(DHT_Name* DHT)
+uint8_t DHT_ReadTempHum(DHT_Device* DHT)
 {
 	uint32_t cap[DHT_EDGE_COUNT];
 	uint8_t  data[5] = {0};

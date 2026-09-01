@@ -1,23 +1,16 @@
 /**
-	Website: khuenguyencreator.com
-	Ten Thu Vien: OLED_LCD_SSD1306
-	Chuc Nang: Dieu khien man hinh SSD1306, SHT1103...
-	Tac Gia: Khue Nguyen Creator
-	Huong Dan Su dung: 
-	- Khai b�o I2C
-	- Khai b�o truoc main: SSD1306_Name SSD1306;
-	- Khoi tao I2C cho LCD: SSD1306_Init(&SSD1306, &hi2c1);
-	- Su dung cac ham phai truyen v�o &SSD1306
-			SSD1306_Clear(&SSD1306);
-			SSD1306_GotoXY(&SSD1306, 1,1);
-			SSD1306_Puts(&SSD1306, "KHUE NGUYEN", &Font_11x18, SSD1306_COLOR_WHITE);
-   ----------------------------------------------------------------------
+ * @file    ssd1306.c
+ * @brief   SSD1306 / SH1106 monochrome OLED, 128x64, I2C - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
  */
 #include "ssd1306.h"
 
 #define ABS(x)   ((x) > 0 ? (x) : -(x))
 
-static void SSD1306_I2C_WriteMulti(SSD1306_Name* SSD1306, uint8_t address, uint8_t reg, uint8_t* data, uint16_t count) 
+static void SSD1306_I2C_WriteMulti(SSD1306_Device* SSD1306, uint8_t address, uint8_t reg, uint8_t* data, uint16_t count) 
 {
 	uint8_t TxBuff[256];
 	TxBuff[0] = reg;
@@ -28,7 +21,7 @@ static void SSD1306_I2C_WriteMulti(SSD1306_Name* SSD1306, uint8_t address, uint8
 	HAL_I2C_Master_Transmit(SSD1306->I2C, address, TxBuff, count+1, 10);
 }
 
-static void SSD1306_I2C_Write(SSD1306_Name* SSD1306, uint8_t address, uint8_t reg, uint8_t data)
+static void SSD1306_I2C_Write(SSD1306_Device* SSD1306, uint8_t address, uint8_t reg, uint8_t data)
 {
 	uint8_t TxBuff[2];
 	TxBuff[0] = reg;
@@ -36,12 +29,12 @@ static void SSD1306_I2C_Write(SSD1306_Name* SSD1306, uint8_t address, uint8_t re
 	HAL_I2C_Master_Transmit(SSD1306->I2C, address, TxBuff, 2, 10);
 }
 
-static void SSD1306_WriteCmd(SSD1306_Name* SSD1306, uint8_t Cmd)
+static void SSD1306_WriteCmd(SSD1306_Device* SSD1306, uint8_t Cmd)
 {
 	SSD1306_I2C_Write(SSD1306, SSD1306_I2C_ADDR, 0x00, Cmd);
 }
 
-//static void SSD1306_WriteData(SSD1306_Name* SSD1306, uint8_t Data)
+//static void SSD1306_WriteData(SSD1306_Device* SSD1306, uint8_t Data)
 //{
 //	SSD1306_I2C_Write(SSD1306, SSD1306_I2C_ADDR, 0x40, Data);
 //}
@@ -49,7 +42,7 @@ static void SSD1306_WriteCmd(SSD1306_Name* SSD1306, uint8_t Cmd)
 
 ////////////////////
 
-uint8_t SSD1306_Init(SSD1306_Name* SSD1306, I2C_HandleTypeDef* I2C) {
+uint8_t SSD1306_Init(SSD1306_Device* SSD1306, I2C_HandleTypeDef* I2C) {
 
 	/* Check if LCD connected to I2C */
 	SSD1306->I2C = I2C;
@@ -113,7 +106,7 @@ uint8_t SSD1306_Init(SSD1306_Name* SSD1306, I2C_HandleTypeDef* I2C) {
 	return 1;
 }
 
-void SSD1306_ScrollRight(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_row)
+void SSD1306_ScrollRight(SSD1306_Device* SSD1306, uint8_t start_row, uint8_t end_row)
 {
   SSD1306_WriteCmd(SSD1306,SSD1306_RIGHT_HORIZONTAL_SCROLL);  // send 0x26
   SSD1306_WriteCmd(SSD1306,0x00);  // send dummy
@@ -126,7 +119,7 @@ void SSD1306_ScrollRight(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_r
 }
 
 
-void SSD1306_ScrollLeft(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_row)
+void SSD1306_ScrollLeft(SSD1306_Device* SSD1306, uint8_t start_row, uint8_t end_row)
 {
   SSD1306_WriteCmd(SSD1306,SSD1306_LEFT_HORIZONTAL_SCROLL);  // send 0x26
   SSD1306_WriteCmd(SSD1306,0x00);  // send dummy
@@ -139,7 +132,7 @@ void SSD1306_ScrollLeft(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_ro
 }
 
 
-void SSD1306_Scrolldiagright(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_row)
+void SSD1306_Scrolldiagright(SSD1306_Device* SSD1306, uint8_t start_row, uint8_t end_row)
 {
   SSD1306_WriteCmd(SSD1306,SSD1306_SET_VERTICAL_SCROLL_AREA);  // sect the area
   SSD1306_WriteCmd(SSD1306,0x00);   // write dummy
@@ -155,7 +148,7 @@ void SSD1306_Scrolldiagright(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t e
 }
 
 
-void SSD1306_Scrolldiagleft(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t end_row)
+void SSD1306_Scrolldiagleft(SSD1306_Device* SSD1306, uint8_t start_row, uint8_t end_row)
 {
   SSD1306_WriteCmd(SSD1306,SSD1306_SET_VERTICAL_SCROLL_AREA);  // sect the area
   SSD1306_WriteCmd(SSD1306,0x00);   // write dummy
@@ -171,17 +164,17 @@ void SSD1306_Scrolldiagleft(SSD1306_Name* SSD1306, uint8_t start_row, uint8_t en
 }
 
 
-void SSD1306_Stopscroll(SSD1306_Name* SSD1306)
+void SSD1306_Stopscroll(SSD1306_Device* SSD1306)
 {
 	SSD1306_WriteCmd(SSD1306,SSD1306_DEACTIVATE_SCROLL);
 }
 
-void SSD1306_InvertDisplay(SSD1306_Name* SSD1306, int i)
+void SSD1306_InvertDisplay(SSD1306_Device* SSD1306, int i)
 {
   if(i) SSD1306_WriteCmd(SSD1306,SSD1306_INVERTDISPLAY);
   else SSD1306_WriteCmd(SSD1306,SSD1306_NORMALDISPLAY);
 }
-void SSD1306_DrawBitmap(SSD1306_Name* SSD1306, int16_t x, int16_t y, const unsigned char* bitmap, int16_t w, int16_t h, SSD1306_COLOR_t color)
+void SSD1306_DrawBitmap(SSD1306_Device* SSD1306, int16_t x, int16_t y, const unsigned char* bitmap, int16_t w, int16_t h, SSD1306_COLOR_t color)
 {
 
     int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
@@ -204,7 +197,7 @@ void SSD1306_DrawBitmap(SSD1306_Name* SSD1306, int16_t x, int16_t y, const unsig
     }
 }
 
-void SSD1306_UpdateScreen(SSD1306_Name* SSD1306) 
+void SSD1306_UpdateScreen(SSD1306_Device* SSD1306) 
 {
 	uint8_t m;	
 	for (m = 0; m < 8; m++) {
@@ -216,7 +209,7 @@ void SSD1306_UpdateScreen(SSD1306_Name* SSD1306)
 		SSD1306_I2C_WriteMulti(SSD1306, SSD1306_I2C_ADDR, 0x40, &SSD1306->SSD1306_Buffer[SSD1306_WIDTH * m], SSD1306_WIDTH);
 	}
 }
-void SSD1306_ToggleInvert(SSD1306_Name* SSD1306) 
+void SSD1306_ToggleInvert(SSD1306_Device* SSD1306) 
 {
 	uint16_t i;
 	/* Toggle invert */
@@ -227,13 +220,13 @@ void SSD1306_ToggleInvert(SSD1306_Name* SSD1306)
 		SSD1306->SSD1306_Buffer[i] = ~SSD1306->SSD1306_Buffer[i];
 	}
 }
-void SSD1306_Fill(SSD1306_Name* SSD1306, SSD1306_COLOR_t color) 
+void SSD1306_Fill(SSD1306_Device* SSD1306, SSD1306_COLOR_t color) 
 {
 	/* Set memory */
 	memset(SSD1306->SSD1306_Buffer, (color == SSD1306_COLOR_BLACK) ? 0x00 : 0xFF, sizeof(SSD1306->SSD1306_Buffer));
 }
 
-void SSD1306_DrawPixel(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, SSD1306_COLOR_t color) {
+void SSD1306_DrawPixel(SSD1306_Device* SSD1306, uint16_t x, uint16_t y, SSD1306_COLOR_t color) {
 	if(x >= SSD1306_WIDTH || y >= SSD1306_HEIGHT) 
 	{
 		/* Error */
@@ -255,14 +248,14 @@ void SSD1306_DrawPixel(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, SSD1306_CO
 	}
 }
 
-void SSD1306_GotoXY(SSD1306_Name* SSD1306, uint16_t x, uint16_t y)
+void SSD1306_GotoXY(SSD1306_Device* SSD1306, uint16_t x, uint16_t y)
 {
 	/* Set write pointers */
 	SSD1306->CurrentX = x+2;
 	SSD1306->CurrentY = y;
 }
 
-char SSD1306_Putc(SSD1306_Name* SSD1306, char ch, FontDef_t* Font, SSD1306_COLOR_t color) 
+char SSD1306_Putc(SSD1306_Device* SSD1306, char ch, FontDef_t* Font, SSD1306_COLOR_t color) 
 {
 	uint32_t i, b, j;
 	
@@ -295,7 +288,7 @@ char SSD1306_Putc(SSD1306_Name* SSD1306, char ch, FontDef_t* Font, SSD1306_COLOR
 	return ch;
 }
 
-char SSD1306_Puts(SSD1306_Name* SSD1306, char* str, FontDef_t* Font, SSD1306_COLOR_t color) {
+char SSD1306_Puts(SSD1306_Device* SSD1306, char* str, FontDef_t* Font, SSD1306_COLOR_t color) {
 	/* Write characters */
 	while (*str) {
 		/* Write character by character */
@@ -313,7 +306,7 @@ char SSD1306_Puts(SSD1306_Name* SSD1306, char* str, FontDef_t* Font, SSD1306_COL
 }
  
 
-void SSD1306_DrawLine(SSD1306_Name* SSD1306, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, SSD1306_COLOR_t c) {
+void SSD1306_DrawLine(SSD1306_Device* SSD1306, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, SSD1306_COLOR_t c) {
 	int16_t dx, dy, sx, sy, err, e2, i, tmp; 
 	
 	/* Check for overflow */
@@ -397,7 +390,7 @@ void SSD1306_DrawLine(SSD1306_Name* SSD1306, uint16_t x0, uint16_t y0, uint16_t 
 	}
 }
 
-void SSD1306_DrawRectangle(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, uint16_t w, uint16_t h, SSD1306_COLOR_t c) {
+void SSD1306_DrawRectangle(SSD1306_Device* SSD1306, uint16_t x, uint16_t y, uint16_t w, uint16_t h, SSD1306_COLOR_t c) {
 	/* Check input parameters */
 	if (
 		x >= SSD1306_WIDTH ||
@@ -422,7 +415,7 @@ void SSD1306_DrawRectangle(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, uint16
 	SSD1306_DrawLine(SSD1306, x + w, y, x + w, y + h, c); /* Right line */
 }
 
-void SSD1306_DrawFilledRectangle(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, uint16_t w, uint16_t h, SSD1306_COLOR_t c) {
+void SSD1306_DrawFilledRectangle(SSD1306_Device* SSD1306, uint16_t x, uint16_t y, uint16_t w, uint16_t h, SSD1306_COLOR_t c) {
 	uint8_t i;
 	
 	/* Check input parameters */
@@ -449,7 +442,7 @@ void SSD1306_DrawFilledRectangle(SSD1306_Name* SSD1306, uint16_t x, uint16_t y, 
 	}
 }
 
-void SSD1306_DrawTriangle(SSD1306_Name* SSD1306, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, SSD1306_COLOR_t color)
+void SSD1306_DrawTriangle(SSD1306_Device* SSD1306, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, SSD1306_COLOR_t color)
 {
 	/* Draw lines */
 	SSD1306_DrawLine(SSD1306, x1, y1, x2, y2, color);
@@ -458,7 +451,7 @@ void SSD1306_DrawTriangle(SSD1306_Name* SSD1306, uint16_t x1, uint16_t y1, uint1
 }
 
 
-void SSD1306_DrawFilledTriangle(SSD1306_Name* SSD1306, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, SSD1306_COLOR_t color) 
+void SSD1306_DrawFilledTriangle(SSD1306_Device* SSD1306, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, SSD1306_COLOR_t color) 
 {
 	int16_t deltax = 0, deltay = 0, x = 0, y = 0, xinc1 = 0, xinc2 = 0, 
 	yinc1 = 0, yinc2 = 0, den = 0, num = 0, numadd = 0, numpixels = 0, 
@@ -515,7 +508,7 @@ void SSD1306_DrawFilledTriangle(SSD1306_Name* SSD1306, uint16_t x1, uint16_t y1,
 	}
 }
 
-void SSD1306_DrawCircle(SSD1306_Name* SSD1306, int16_t x0, int16_t y0, int16_t r, SSD1306_COLOR_t c) {
+void SSD1306_DrawCircle(SSD1306_Device* SSD1306, int16_t x0, int16_t y0, int16_t r, SSD1306_COLOR_t c) {
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
 	int16_t ddF_y = -2 * r;
@@ -549,7 +542,7 @@ void SSD1306_DrawCircle(SSD1306_Name* SSD1306, int16_t x0, int16_t y0, int16_t r
     }
 }
 
-void SSD1306_DrawFilledCircle(SSD1306_Name* SSD1306, int16_t x0, int16_t y0, int16_t r, SSD1306_COLOR_t c) {
+void SSD1306_DrawFilledCircle(SSD1306_Device* SSD1306, int16_t x0, int16_t y0, int16_t r, SSD1306_COLOR_t c) {
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
 	int16_t ddF_y = -2 * r;
@@ -580,18 +573,18 @@ void SSD1306_DrawFilledCircle(SSD1306_Name* SSD1306, int16_t x0, int16_t y0, int
     }
 }
  
-void SSD1306_Clear(SSD1306_Name* SSD1306)
+void SSD1306_Clear(SSD1306_Device* SSD1306)
 {
 	SSD1306_Fill(SSD1306, SSD1306_COLOR_BLACK);
   SSD1306_UpdateScreen(SSD1306);
 }
-void SSD1306_ON(SSD1306_Name* SSD1306) 
+void SSD1306_ON(SSD1306_Device* SSD1306) 
 {
 	SSD1306_WriteCmd(SSD1306,0x8D);  
 	SSD1306_WriteCmd(SSD1306,0x14);  
 	SSD1306_WriteCmd(SSD1306,0xAF);  
 }
-void SSD1306_OFF(SSD1306_Name* SSD1306) 
+void SSD1306_OFF(SSD1306_Device* SSD1306) 
 {
 	SSD1306_WriteCmd(SSD1306,0x8D);  
 	SSD1306_WriteCmd(SSD1306,0x10);

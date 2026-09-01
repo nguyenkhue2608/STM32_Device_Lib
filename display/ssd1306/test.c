@@ -8,7 +8,7 @@
 #include "test.h"
 #include "ssd1306.h"
 #define min(a, b) (((a) < (b)) ? (a) : (b))
-extern SSD1306_Name SSD1306;
+extern SSD1306_Device SSD1306;
 void TestLines(uint8_t color)
 {
     uint8_t x1, y1, x2, y2;

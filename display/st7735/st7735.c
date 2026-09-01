@@ -1,14 +1,11 @@
-/*****************************************************************************************************************
-Ten Thu Vien: ST7735 LIB
-Chuc Nang: Dieu khien man hinh TFT LCD 1.44, 1.8 inch
-Tac Gia: Khue Nguyen Creator
-Huong Dan Su dung: 
-- Sua lai file Platform.h khi su dung voi thu vien khac nhau  
-- Dinh Nghia cac chan CS, DC, RS la cac chan ouput
-- Cau Hinh SPI, Sua lai marco de dung voi SPI can dung: #define ST7735_SPI_PORT hspi1
-Pinout:
-
-******************************************************************************************************************/
+/**
+ * @file    st7735.c
+ * @brief   ST7735 TFT LCD (1.44" / 1.8", 128x160), SPI - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "st7735.h"
 
 //*********************** Marco for HAL LIB ***************************************************///

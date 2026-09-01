@@ -1,11 +1,18 @@
-
+/**
+ * @file    rc522.c
+ * @brief   MFRC522 13.56 MHz RFID / NFC reader (MIFARE), SPI - implementation.
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #include "rc522.h"
 	
-static void MFRC522_CS(MFRC522_Name* MFRC522, uint8_t Value)
+static void MFRC522_CS(MFRC522_Device* MFRC522, uint8_t Value)
 {
 	HAL_GPIO_WritePin(MFRC522->CS_PORT, MFRC522->CS_PIN, Value);
 }
-static uint8_t TM_SPI_Send(MFRC522_Name* MFRC522, uint8_t data)
+static uint8_t TM_SPI_Send(MFRC522_Device* MFRC522, uint8_t data)
 {
 	uint8_t data_se[1], data_re[1];
 	data_se[0] = data;
@@ -15,7 +22,7 @@ static uint8_t TM_SPI_Send(MFRC522_Name* MFRC522, uint8_t data)
 	return data_re[0];
 	
 }
-static void MFRC522_WriteRegister(MFRC522_Name* MFRC522, uint8_t addr, uint8_t val) 
+static void MFRC522_WriteRegister(MFRC522_Device* MFRC522, uint8_t addr, uint8_t val) 
 {
 	//CS low
 	uint8_t Address = (addr << 1) & 0x7E;
@@ -27,7 +34,7 @@ static void MFRC522_WriteRegister(MFRC522_Name* MFRC522, uint8_t addr, uint8_t v
 	MFRC522_CS(MFRC522, 1);
 }
 
-static uint8_t MFRC522_ReadRegister(MFRC522_Name* MFRC522, uint8_t addr) 
+static uint8_t MFRC522_ReadRegister(MFRC522_Device* MFRC522, uint8_t addr) 
 {
 	uint8_t Value;
 	uint8_t Address = ((addr << 1) & 0x7E)|0x80;
@@ -41,16 +48,16 @@ static uint8_t MFRC522_ReadRegister(MFRC522_Name* MFRC522, uint8_t addr)
 	return Value;	
 }
 
-static void MFRC522_SetBitMask(MFRC522_Name* MFRC522, uint8_t reg, uint8_t mask) 
+static void MFRC522_SetBitMask(MFRC522_Device* MFRC522, uint8_t reg, uint8_t mask) 
 {
 	MFRC522_WriteRegister(MFRC522, reg, MFRC522_ReadRegister(MFRC522, reg) | mask);
 }
 
-static void MFRC522_ClearBitMask(MFRC522_Name* MFRC522, uint8_t reg, uint8_t mask)
+static void MFRC522_ClearBitMask(MFRC522_Device* MFRC522, uint8_t reg, uint8_t mask)
 {
 	MFRC522_WriteRegister(MFRC522, reg, MFRC522_ReadRegister(MFRC522, reg) & (~mask));
 } 
-static void MFRC522_AntennaOn(MFRC522_Name* MFRC522)
+static void MFRC522_AntennaOn(MFRC522_Device* MFRC522)
 {
 	uint8_t temp;
 
@@ -60,17 +67,17 @@ static void MFRC522_AntennaOn(MFRC522_Name* MFRC522)
 	}
 }
 
-void MFRC522_AntennaOff(MFRC522_Name* MFRC522) 
+void MFRC522_AntennaOff(MFRC522_Device* MFRC522) 
 {
 	MFRC522_ClearBitMask(MFRC522, MFRC522_REG_TX_CONTROL, 0x03);
 }
 
-static void MFRC522_Reset(MFRC522_Name* MFRC522) 
+static void MFRC522_Reset(MFRC522_Device* MFRC522) 
 {
 	MFRC522_WriteRegister(MFRC522, MFRC522_REG_COMMAND, PCD_RESETPHASE);
 }
 
-void MFRC522_Init(MFRC522_Name* MFRC522, SPI_HandleTypeDef* SPI_In, GPIO_TypeDef*	CS_PORT, uint16_t CS_PIN)
+void MFRC522_Init(MFRC522_Device* MFRC522, SPI_HandleTypeDef* SPI_In, GPIO_TypeDef*	CS_PORT, uint16_t CS_PIN)
 {
 	MFRC522->SPI = SPI_In;
 	MFRC522->CS_PORT = CS_PORT;
@@ -90,7 +97,7 @@ void MFRC522_Init(MFRC522_Name* MFRC522, SPI_HandleTypeDef* SPI_In, GPIO_TypeDef
 
 	MFRC522_AntennaOn(MFRC522);		//Open the antenna
 }
-MFRC522_Status_t MFRC522_Check(MFRC522_Name* MFRC522, uint8_t* id) 
+MFRC522_Status_t MFRC522_Check(MFRC522_Device* MFRC522, uint8_t* id) 
 {
 	MFRC522_Status_t status;
 	//Find cards, return card type
@@ -105,7 +112,7 @@ MFRC522_Status_t MFRC522_Check(MFRC522_Name* MFRC522, uint8_t* id)
 	return status;
 }
 
-MFRC522_Status_t MFRC522_Compare(MFRC522_Name* MFRC522, uint8_t* CardID, uint8_t* CompareID) 
+MFRC522_Status_t MFRC522_Compare(MFRC522_Device* MFRC522, uint8_t* CardID, uint8_t* CompareID) 
 {
 	uint8_t i;
 	for (i = 0; i < 5; i++) {
@@ -115,7 +122,7 @@ MFRC522_Status_t MFRC522_Compare(MFRC522_Name* MFRC522, uint8_t* CardID, uint8_t
 	}
 	return MI_OK;
 }
-MFRC522_Status_t MFRC522_Request(MFRC522_Name* MFRC522, uint8_t reqMode, uint8_t* TagType) 
+MFRC522_Status_t MFRC522_Request(MFRC522_Device* MFRC522, uint8_t reqMode, uint8_t* TagType) 
 {
 	MFRC522_Status_t status;  
 	uint16_t backBits;			//The received data bits
@@ -131,7 +138,7 @@ MFRC522_Status_t MFRC522_Request(MFRC522_Name* MFRC522, uint8_t reqMode, uint8_t
 
 	return status;
 }
-MFRC522_Status_t MFRC522_ToCard(MFRC522_Name* MFRC522, uint8_t command, uint8_t* sendData, uint8_t sendLen, uint8_t* backData, uint16_t* backLen)
+MFRC522_Status_t MFRC522_ToCard(MFRC522_Device* MFRC522, uint8_t command, uint8_t* sendData, uint8_t sendLen, uint8_t* backData, uint16_t* backLen)
 {
 	MFRC522_Status_t status = MI_ERR;
 	uint8_t irqEn = 0x00;
@@ -219,7 +226,7 @@ MFRC522_Status_t MFRC522_ToCard(MFRC522_Name* MFRC522, uint8_t command, uint8_t*
 	return status;
 }
 
-MFRC522_Status_t MFRC522_Anticoll(MFRC522_Name* MFRC522, uint8_t* serNum)
+MFRC522_Status_t MFRC522_Anticoll(MFRC522_Device* MFRC522, uint8_t* serNum)
 {
 	MFRC522_Status_t status;
 	uint8_t i;
@@ -244,7 +251,7 @@ MFRC522_Status_t MFRC522_Anticoll(MFRC522_Name* MFRC522, uint8_t* serNum)
 	return status;
 } 
 
-void MFRC522_CalculateCRC(MFRC522_Name* MFRC522, uint8_t*  pIndata, uint8_t len, uint8_t* pOutData) {
+void MFRC522_CalculateCRC(MFRC522_Device* MFRC522, uint8_t*  pIndata, uint8_t len, uint8_t* pOutData) {
 	uint8_t i, n;
 
 	MFRC522_ClearBitMask(MFRC522, MFRC522_REG_DIV_IRQ, 0x04);			//CRCIrq = 0
@@ -269,7 +276,7 @@ void MFRC522_CalculateCRC(MFRC522_Name* MFRC522, uint8_t*  pIndata, uint8_t len,
 	pOutData[1] = MFRC522_ReadRegister(MFRC522, MFRC522_REG_CRC_RESULT_M);
 }
 
-uint8_t MFRC522_SelectTag(MFRC522_Name* MFRC522, uint8_t* serNum) 
+uint8_t MFRC522_SelectTag(MFRC522_Device* MFRC522, uint8_t* serNum) 
 {
 	uint8_t i;
 	MFRC522_Status_t status;
@@ -294,7 +301,7 @@ uint8_t MFRC522_SelectTag(MFRC522_Name* MFRC522, uint8_t* serNum)
 	return size;
 }
 
-MFRC522_Status_t MFRC522_Auth(MFRC522_Name* MFRC522, uint8_t authMode, uint8_t BlockAddr, uint8_t* Sectorkey, uint8_t* serNum) 
+MFRC522_Status_t MFRC522_Auth(MFRC522_Device* MFRC522, uint8_t authMode, uint8_t BlockAddr, uint8_t* Sectorkey, uint8_t* serNum) 
 {
 	MFRC522_Status_t status;
 	uint16_t recvBits;
@@ -319,7 +326,7 @@ MFRC522_Status_t MFRC522_Auth(MFRC522_Name* MFRC522, uint8_t authMode, uint8_t B
 	return status;
 }
 
-MFRC522_Status_t MFRC522_Read(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t* recvData)
+MFRC522_Status_t MFRC522_Read(MFRC522_Device* MFRC522, uint8_t blockAddr, uint8_t* recvData)
 {
 	MFRC522_Status_t status;
 	uint16_t unLen;
@@ -336,7 +343,7 @@ MFRC522_Status_t MFRC522_Read(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t*
 	return status;
 }
 
-MFRC522_Status_t MFRC522_Write(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t* writeData) 
+MFRC522_Status_t MFRC522_Write(MFRC522_Device* MFRC522, uint8_t blockAddr, uint8_t* writeData) 
 {
 	MFRC522_Status_t status;
 	uint16_t recvBits;
@@ -368,7 +375,7 @@ MFRC522_Status_t MFRC522_Write(MFRC522_Name* MFRC522, uint8_t blockAddr, uint8_t
 	return status;
 }
 
-void MFRC522_Halt(MFRC522_Name* MFRC522)
+void MFRC522_Halt(MFRC522_Device* MFRC522)
 {
 	uint16_t unLen;
 	uint8_t buff[4]; 

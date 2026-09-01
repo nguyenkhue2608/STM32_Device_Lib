@@ -1,21 +1,20 @@
-/******************************************************************************************************************
-@File:  	CHAR_LCD 8BIT (Character LCD 8Bit Mode)
-@Author:  Khue Nguyen
-@Website: khuenguyencreator.com
-@Youtube: https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
-Huong dan su dung:
-- Su dung thu vien HAL
-- Khoi tao bien LCD: CHAR_LCD_8BIT_Name LCD1;
-- Khoi tao LCD do:
-CHAR_LCD_8BIT_Init(&LCD1, 16, 2, CS_GPIO_Port, CS_Pin, EN_GPIO_Port, EN_Pin,
-									D0_GPIO_Port, D0_Pin, D1_GPIO_Port, D1_Pin,
-									D2_GPIO_Port, D2_Pin, D3_GPIO_Port, D3_Pin,
-									D4_GPIO_Port, D4_Pin, D5_GPIO_Port, D5_Pin,
-									D6_GPIO_Port, D6_Pin, D7_GPIO_Port, D7_Pin);
-- Su dung cac ham truyen dia chi cua LCD do: 
-CHAR_LCD_8BIT_SetCursor(&LCD1, 0, 0);
-CHAR_LCD_8BIT_WriteString(&LCD1,"Hello anh em");	
-******************************************************************************************************************/
+/**
+ * @file    char_lcd.h
+ * @brief   HD44780 character LCD, 4-bit / 8-bit parallel (LCD1602 / LCD2004 / LiquidCrystal).
+ *
+ * Requires: RS + EN + 4 or 8 data GPIOs.
+ *
+ * Usage:
+ *   CHAR_LCD_Device lcd;
+ *   CHAR_LCD_4BIT_Init(&lcd, 16, 2, RS_Port,RS_Pin, EN_Port,EN_Pin,
+ *                      D4_Port,D4_Pin, D5_Port,D5_Pin, D6_Port,D6_Pin, D7_Port,D7_Pin);
+ *   CHAR_LCD_SetCursor(&lcd, 0, 0);
+ *   CHAR_LCD_WriteString(&lcd, "Hello");
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __CHAR_LCD_H
 #define __CHAR_LCD_H
 
@@ -92,26 +91,26 @@ typedef struct
 	uint8_t DISPLAYCTRL;
 	uint8_t CURSORSHIFT;
 	uint8_t FUNCTIONSET;
-}CHAR_LCD_Name;
+}CHAR_LCD_Device;
 
 
-void CHAR_LCD_8BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
+void CHAR_LCD_8BIT_Init(CHAR_LCD_Device* LCD, uint8_t Colum, uint8_t Row,
 									GPIO_TypeDef* RS_PORT, uint16_t RS_PIN, GPIO_TypeDef* EN_PORT, uint16_t EN_PIN,
 									GPIO_TypeDef* D0_PORT, uint16_t D0_PIN, GPIO_TypeDef* D1_PORT, uint16_t D1_PIN,
 									GPIO_TypeDef* D2_PORT, uint16_t D2_PIN, GPIO_TypeDef* D3_PORT, uint16_t D3_PIN,
 									GPIO_TypeDef* D4_PORT, uint16_t D4_PIN, GPIO_TypeDef* D5_PORT, uint16_t D5_PIN,
 									GPIO_TypeDef* D6_PORT, uint16_t D6_PIN, GPIO_TypeDef* D7_PORT, uint16_t D7_PIN);
-void CHAR_LCD_4BIT_Init(CHAR_LCD_Name* LCD, uint8_t Colum, uint8_t Row,
+void CHAR_LCD_4BIT_Init(CHAR_LCD_Device* LCD, uint8_t Colum, uint8_t Row,
 									GPIO_TypeDef* RS_PORT, uint16_t RS_PIN, GPIO_TypeDef* EN_PORT, uint16_t EN_PIN,
 									GPIO_TypeDef* D4_PORT, uint16_t D4_PIN, GPIO_TypeDef* D5_PORT, uint16_t D5_PIN,
 									GPIO_TypeDef* D6_PORT, uint16_t D6_PIN, GPIO_TypeDef* D7_PORT, uint16_t D7_PIN);
-void CHAR_LCD_SetCursor(CHAR_LCD_Name* LCD, uint8_t Xpos, uint8_t YPos);
-void CHAR_LCD_WriteChar(CHAR_LCD_Name* LCD, char character);
-void CHAR_LCD_WriteString(CHAR_LCD_Name* LCD, char *String);
-void CHAR_LCD_Clear(CHAR_LCD_Name* LCD);
-void CHAR_LCD_ReturnHome(CHAR_LCD_Name* LCD);
-void CHAR_LCD_CursorOn(CHAR_LCD_Name* LCD);
-void CHAR_LCD_CursorOff(CHAR_LCD_Name* LCD);
-void CHAR_LCD_BlinkOn(CHAR_LCD_Name* LCD);
-void CHAR_LCD_BlinkOff(CHAR_LCD_Name* LCD);
+void CHAR_LCD_SetCursor(CHAR_LCD_Device* LCD, uint8_t Xpos, uint8_t YPos);
+void CHAR_LCD_WriteChar(CHAR_LCD_Device* LCD, char character);
+void CHAR_LCD_WriteString(CHAR_LCD_Device* LCD, char *String);
+void CHAR_LCD_Clear(CHAR_LCD_Device* LCD);
+void CHAR_LCD_ReturnHome(CHAR_LCD_Device* LCD);
+void CHAR_LCD_CursorOn(CHAR_LCD_Device* LCD);
+void CHAR_LCD_CursorOff(CHAR_LCD_Device* LCD);
+void CHAR_LCD_BlinkOn(CHAR_LCD_Device* LCD);
+void CHAR_LCD_BlinkOff(CHAR_LCD_Device* LCD);
 #endif

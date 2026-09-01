@@ -1,3 +1,17 @@
+/**
+ * @file    flash.h
+ * @brief   Read / write the STM32 internal flash (last pages) for non-volatile storage.
+ *
+ * Requires: nothing external - uses on-chip flash.
+ *
+ * Usage:
+ *   FLASH_WritePage(FLASH_USER_START_ADDR, FLASH_USER_END_ADDR, 0x12345678);
+ *   uint32_t v = FLASH_ReadData(FLASH_USER_START_ADDR);
+ *
+ * @author  Khue Nguyen
+ * @website khuenguyencreator.com
+ * @youtube https://www.youtube.com/channel/UCt8cFnPOaHrQXWmVkk-lfvg
+ */
 #ifndef __FLASH_H
 #define __FLASH_H
 #include "stm32f1xx_hal.h"
